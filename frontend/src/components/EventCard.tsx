@@ -1,4 +1,5 @@
 import React from "react";
+import { FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import { Event } from "../types/event";
 
 interface Props {

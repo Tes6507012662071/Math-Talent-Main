@@ -1,27 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { FaCalendarAlt as FaCalendarAltRaw } from "react-icons/fa";
+import { FaMapMarkerAlt as FaMapMarkerAltRaw } from "react-icons/fa";
 import { Event } from "../types/event";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+const FaCalendarAlt = FaCalendarAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const FaMapMarkerAlt = FaMapMarkerAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+
+
 const mockEvents: Event[] = [
   {
-      id: "1",
-      title: "การแข่งขันคณิตศาสตร์ระดับมัธยมต้น",
-      description: "กิจกรรมแข่งขันคณิตศาสตร์ระดับชาติ ประจำปี 2025 สำหรับนักเรียนระดับมัธยมต้นทั่วประเทศ",
-      date: "12 สิงหาคม 2025",
-      location: "กรุงเทพมหานคร",
-      registrationType: "individual",
-      detail: ""
+    id: "1",
+    title: "การแข่งขันคณิตศาสตร์ระดับมัธยมต้น",
+    description: "กิจกรรมแข่งขันคณิตศาสตร์ระดับชาติ ประจำปี 2025 สำหรับนักเรียนระดับมัธยมต้นทั่วประเทศ",
+    date: "12 สิงหาคม 2025",
+    location: "กรุงเทพมหานคร",
+    registrationType: "individual",
+    detail: ""
   },
   {
-      id: "2",
-      title: "สอบคัดเลือกทุนคณิตศาสตร์",
-      description: "เปิดสอบคัดเลือกนักเรียนทุน Math Talent Foundation สำหรับผู้มีศักยภาพสูงทางคณิตศาสตร์",
-      date: "5 กันยายน 2025",
-      location: "เชียงใหม่",
-      registrationType: "individual",
-      detail: ""
+    id: "2",
+    title: "สอบคัดเลือกทุนคณิตศาสตร์",
+    description: "เปิดสอบคัดเลือกนักเรียนทุน Math Talent Foundation สำหรับผู้มีศักยภาพสูงทางคณิตศาสตร์",
+    date: "5 กันยายน 2025",
+    location: "เชียงใหม่",
+    registrationType: "individual",
+    detail: ""
   },
 ];
 
@@ -55,6 +62,14 @@ const EventDetail: React.FC = () => {
         <p className="text-gray-700 mb-2">
           วันที่จัดกิจกรรม: {event.date}
         </p>
+        <div className="flex items-center text-sm text-gray-600 mb-1">
+          <FaCalendarAlt className="mr-2 text-blue-500" />
+          {event.date}
+        </div>
+        <div className="flex items-center text-sm text-gray-600 mt-1">
+          <FaMapMarkerAlt className="mr-2 text-red-500" />
+          {event.location}
+        </div>
         <p className="text-gray-700 mb-4">สถานที่: {event.location}</p>
         <p className="text-gray-800">{event.description}</p>
         <Link to={`/apply/${event.id}`}>

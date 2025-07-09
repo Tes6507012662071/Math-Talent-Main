@@ -100,6 +100,70 @@ const Navbar = () => {
             <Menu className="w-6 h-6" />
           </button>
         </div>
+
+                {/* Backdrop */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+            onClick={() => {
+              setSidebarOpen(false);
+              setOpenDropdown(null);
+            }}
+          />
+        )}
+
+        {/* Sidebar ที่เลื่อนออกมาจากขวา */}
+        <div
+          className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 rounded-l-2xl ${
+            sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+          ref={sidebarRef}
+        >
+          {/* ส่วนหัวของ Sidebar */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-[#003366] font-bold">More</h2>
+            <button onClick={() => setSidebarOpen(false)}>
+              <X className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+
+          {/* เนื้อหาเมนู */}
+          <div className="p-4 space-y-2">
+            {dropdownMenus.map((menu, idx) => (
+              <div key={idx}>
+                <button
+                  className="w-full flex justify-between items-center text-left font-semibold text-gray-800 py-2 px-2 hover:bg-gray-100 rounded-lg"
+                  onClick={() => toggleDropdown(menu.title)}
+                >
+                  <span>{menu.title}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transform transition ${
+                      openDropdown === menu.title ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {openDropdown === menu.title && (
+                  <div className="pl-4 space-y-1">
+                    {menu.items.map((item, i) => (
+                      <a
+                        key={i}
+                        href={item.href}
+                        onClick={() => {
+                          setSidebarOpen(false); // ปิด sidebar
+                          setOpenDropdown(null); // ปิด dropdown
+                        }}
+                        className="block w-full text-left text-gray-600 hover:text-blue-600"
+                      >
+                        {item.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
       </nav>
 
       {/* Spacer */}
