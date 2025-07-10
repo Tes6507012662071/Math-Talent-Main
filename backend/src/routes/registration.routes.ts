@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware";
+import authMiddleware from "../middleware/authMiddleware";
 import Registration from "../models/Registration"; // ต้องมี model นี้ก่อน
 import multer from "multer";
 const upload = multer({ dest: "uploads/" }); // หรือใช้ Cloudinary ก็ได้

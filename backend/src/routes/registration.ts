@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { uploadSlip } from "../controllers/registrationController";
-import authMiddleware from "../middleware/authMid";
+import authMiddleware from "../middleware/authMiddleware";
 
 
 const router = express.Router();
