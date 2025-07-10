@@ -53,7 +53,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
           />
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            สมัครสมาชิก
+            <Link to="/login" className="text-white-600">สมัครสมาชิก</Link>
           </button>
         </form>
         <p className="text-sm text-center mt-4">

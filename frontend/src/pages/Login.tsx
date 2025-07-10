@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import AuthFormInput from "../components/AuthFormInput";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
   const [form, setForm] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -11,8 +12,18 @@ const Login: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // 🔒 เรียก API login ตรงนี้
-    console.log("Login with", form);
+
+    // ✅ จำลองการ Login (ในอนาคตใช้ API)
+    if (form.email === "test@example.com" && form.password === "123456") {
+      // ✅ เก็บข้อมูลลง localStorage
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", form.email);
+
+      // ✅ เปลี่ยนหน้าไป Landing
+      navigate("/landing");
+    } else {
+      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    }
   };
 
   return (
@@ -34,18 +45,16 @@ const Login: React.FC = () => {
             value={form.password}
             onChange={handleChange}
           />
-          <Link to="/Landing" className="text-sm text-blue-600 hover:underline mb-4 block text-right">
+          
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
             เข้าสู่ระบบ
           </button>
-          </Link>
         </form>
         <p className="text-sm text-center mt-4">
           ยังไม่มีบัญชี? <Link to="/register" className="text-blue-600 underline">สมัครสมาชิก</Link>
         </p>
       </div>
     </div>
-    
   );
 };
 

@@ -7,13 +7,15 @@ import EventDetail from "./pages/EventDetail";
 import Apply from "./pages/Apply";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+
 // import Apply from "./pages/Apply";
 
 const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/events/:id" element={<EventDetail />} />
