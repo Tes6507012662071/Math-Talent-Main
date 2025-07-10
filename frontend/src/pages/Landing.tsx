@@ -1,4 +1,5 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import EventCard from "../components/EventCard";
@@ -80,6 +81,8 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <button className="text-blure-600"><Link to="/profile2" className="text-white-600">โปรไฟล์</Link></button>
 
       <Footer />
     </div>
