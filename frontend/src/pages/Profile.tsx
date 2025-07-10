@@ -1,78 +1,93 @@
 import React, { useEffect, useState } from "react";
+import { fetchUserProfile } from "../api/auth";
+import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 
-interface Student {
-  fullname: string;
-  grade: string;
-  school: string;
-  phone: string;
-  email: string;
-}
-
-interface Registration {
-  eventId: string;
-  type: "individual" | "school";
-  status: string;
-  students: Student[];
+interface EventStatus {
+  event: {
+    title: string;
+    date: string;
+  };
+  status: string; 
 }
 
 const Profile: React.FC = () => {
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [events, setEvents] = useState<EventStatus[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/registration/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setRegistrations(data);
-      setLoading(false);
-    };
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-    fetchData();
+    fetchUserProfile(token)
+      .then(setUser)
+      .catch(() => {
+        localStorage.removeItem("token");
+        alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      });
+
+    getMyRegisteredEvents(token)
+      .then(setEvents)
+      .catch(() => {
+        console.log("โหลด event ไม่ได้");
+      });
   }, []);
 
-  if (loading) return <p className="p-6">กำลังโหลด...</p>;
+  const handleUploadSlip = async (registrationId: string) => {
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "image/*";
+
+  fileInput.onchange = async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      await uploadPaymentSlip(token, registrationId, file);
+      alert("อัปโหลดสลิปสำเร็จ");
+
+      const updatedEvents = await getMyRegisteredEvents(token);
+      setEvents(updatedEvents);
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการอัปโหลด");
+    }
+  };
+
+  fileInput.click();
+};
+
+  if (!user) return <div className="p-8 text-center">กำลังโหลด...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-6">โปรไฟล์ของฉัน</h1>
+    <div className="p-8 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-2">สวัสดีคุณ {user.name}</h1>
+      <p className="text-gray-600 mb-6">Email: {user.email}</p>
 
-      {registrations.length === 0 ? (
-        <p>ยังไม่มีการลงทะเบียน</p>
+      <h2 className="text-lg font-semibold mb-2">กิจกรรมที่สมัครไว้</h2>
+      {events.length === 0 ? (
+        <p className="text-gray-500">ยังไม่มีการสมัครสอบ</p>
       ) : (
-        registrations.map((reg, idx) => (
-          <div
-            key={idx}
-            className="border border-gray-300 p-4 rounded mb-6 bg-white shadow"
-          >
-            <p>
-              <strong>กิจกรรม:</strong> {reg.eventId}
-            </p>
-            <p>
-              <strong>ประเภท:</strong>{" "}
-              {reg.type === "individual" ? "บุคคล" : "โรงเรียน"}
-            </p>
-            <p>
-              <strong>สถานะ:</strong>{" "}
-              <span className="font-semibold text-blue-600">{reg.status}</span>
-            </p>
-
-            <div className="mt-3">
-              <p className="font-medium">รายชื่อผู้สมัคร:</p>
-              <ul className="list-disc pl-6 text-sm">
-                {reg.students.map((stu, i) => (
-                  <li key={i}>
-                    {stu.fullname} ({stu.grade}) - {stu.school}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ))
+        <ul className="space-y-4">
+          {events.map((reg, idx) => (
+            <li key={idx} className="border p-4 rounded shadow-sm">
+              <h3 className="font-semibold">{reg.event.title}</h3>
+              <p className="text-sm text-gray-500">วันสอบ: {new Date(reg.event.date).toLocaleDateString()}</p>
+              <p className="mt-2">
+                <span className="font-medium">สถานะ:</span> {reg.status}
+              </p>
+                  {/* ⬇⬇⬇ เพิ่มจากตรงนี้เข้าไป */}
+                {reg.status === "pending" && (
+                  <button
+                    onClick={() => handleUploadSlip((reg as any)._id)}
+                    className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                    อัปโหลดสลิป
+                  </button>
+                )}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

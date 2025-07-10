@@ -1,25 +1,33 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export type RegistrationStatus = "pending_payment" | "waiting_verification" | "waiting_exam" | "completed";
+import mongoose, { Document } from "mongoose";
 
 export interface IRegistration extends Document {
-  userId: mongoose.Types.ObjectId;
-  eventId: string;
-  registrationType: "individual" | "school";
-  data: any; // store form data or excel info here
-  status: RegistrationStatus;
+  user: mongoose.Types.ObjectId;
+  event: mongoose.Types.ObjectId;
+  type: "individual" | "school";
+  status: "pending" | "slip_uploaded" | "verified" | "exam_ready" | "completed";
   slipUrl?: string;
   certificateUrl?: string;
+  schoolName?: string;
+  excelFileUrl?: string;
 }
 
-const registrationSchema = new Schema<IRegistration>({
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  eventId: { type: String, required: true },
-  registrationType: { type: String, enum: ["individual", "school"], required: true },
-  data: { type: Schema.Types.Mixed, required: true },
-  status: { type: String, enum: ["pending_payment", "waiting_verification", "waiting_exam", "completed"], default: "pending_payment" },
-  slipUrl: { type: String },
-  certificateUrl: { type: String },
-}, { timestamps: true });
+const registrationSchema = new mongoose.Schema<IRegistration>(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    event: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
+    type: { type: String, enum: ["individual", "school"], required: true },
+    status: {
+      type: String,
+      enum: ["pending", "slip_uploaded", "verified", "exam_ready", "completed"],
+      default: "pending",
+    },
+    slipUrl: { type: String },
+    certificateUrl: { type: String },
+    schoolName: { type: String },
+    excelFileUrl: { type: String },
+  },
+  { timestamps: true }
+);
 
-export default mongoose.model<IRegistration>("Registration", registrationSchema);
+const Registration = mongoose.model<IRegistration>("Registration", registrationSchema);
+export default Registration;

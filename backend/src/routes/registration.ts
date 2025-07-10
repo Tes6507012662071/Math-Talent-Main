@@ -1,60 +1,24 @@
-import { Router, Request, Response } from "express";
-import Registration from "../models/Registration";
-import { authMiddleware, AuthRequest } from "../middleware/authMiddleware";
+import express from "express";
+import multer from "multer";
+import { uploadSlip } from "../controllers/registrationController";
+import authMiddleware from "../middleware/authMid";
 
-const router = Router();
 
-// สมัครแบบบุคคล
-router.post("/individual", authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const { eventId, data } = req.body;
-    if (!eventId || !data) return res.status(400).json({ message: "Missing fields" });
+const router = express.Router();
 
-    const registration = new Registration({
-      userId: req.user!.userId,
-      eventId,
-      registrationType: "individual",
-      data,
-      status: "pending_payment",
-    });
-    await registration.save();
-
-    res.status(201).json({ message: "Registration successful" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+// ตั้งค่าการเก็บไฟล์ด้วย multer (เก็บใน local สำหรับ demo)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/slips/"); // สร้างโฟลเดอร์นี้ไว้
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
+  },
 });
+const upload = multer({ storage });
 
-// สมัครแบบโรงเรียน (อัปโหลด Excel)
-// สำหรับง่าย ๆ ตัวอย่างนี้รับข้อมูล Excel เป็น JSON มาแล้วเก็บเลย (ต่อยอดได้)
-router.post("/school", authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const { eventId, data } = req.body;
-    if (!eventId || !data) return res.status(400).json({ message: "Missing fields" });
-
-    const registration = new Registration({
-      userId: req.user!.userId,
-      eventId,
-      registrationType: "school",
-      data,
-      status: "pending_payment",
-    });
-    await registration.save();
-
-    res.status(201).json({ message: "School registration successful" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ดึงข้อมูลสถานะสมัครของ user
-router.get("/status", authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const registrations = await Registration.find({ userId: req.user!.userId });
-    res.json(registrations);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
+// ✅ อัปโหลด slip
+router.post("/upload-slip/:id", authMiddleware, upload.single("slip"), uploadSlip);
 
 export default router;

@@ -1,25 +1,30 @@
-const API_URL = "http://localhost:5000/api/registration";
+export const uploadPaymentSlip = async (token: string, registrationId: string, file: File) => {
+  const formData = new FormData();
+  formData.append("slip", file);
 
-export const registerIndividual = async (eventId: string, student: any, token: string) => {
-  const res = await fetch(`${API_URL}/individual`, {
+  const res = await fetch(`${process.env.REACT_APP_API_BASE}/api/registration/upload-slip/${registrationId}`, {
     method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ eventId, ...student }),
+    body: formData,
   });
+
+
+  if (!res.ok) {
+    throw new Error("Upload failed");
+  }
+
   return res.json();
 };
 
-export const registerSchool = async (eventId: string, students: any[], token: string) => {
-  const res = await fetch(`${API_URL}/school`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+export const getMyRegisteredEvents = async (token: string) => {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/registration/my`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ eventId, students }),
   });
+  if (!res.ok) throw new Error("Failed to fetch registered events");
   return res.json();
 };
+

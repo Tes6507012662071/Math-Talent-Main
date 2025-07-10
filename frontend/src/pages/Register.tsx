@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import AuthFormInput from "../components/AuthFormInput";
 import { Link } from "react-router-dom";
+import { registerUser } from "../api/auth";
+import { useNavigate } from "react-router-dom";
 
 const Register: React.FC = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
@@ -9,15 +11,24 @@ const Register: React.FC = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password !== form.confirmPassword) {
-      alert("Password ไม่ตรงกัน");
-      return;
-    }
-    // 🔐 เรียก API register ตรงนี้
-    console.log("Register with", form);
-  };
+const navigate = useNavigate();
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (form.password !== form.confirmPassword) {
+    alert("Password ไม่ตรงกัน");
+    return;
+  }
+
+  try {
+    await registerUser(form.name, form.email, form.password);
+    alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
+    navigate("/login");
+  } catch (err: any) {
+    alert(err.message || "สมัครไม่สำเร็จ");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -53,7 +64,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
           />
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            <Link to="/login" className="text-white-600">สมัครสมาชิก</Link>
+            สมัครสมาชิก
           </button>
         </form>
         <p className="text-sm text-center mt-4">

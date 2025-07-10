@@ -25,6 +25,7 @@ const App: React.FC = () => {
         <Route path="/apply/:eventId" element={<Apply />} />
         <Route path="/profile2" element={<Profile2 />} />
         <Route path="/profile"element={<ProtectedRoute><Profile /></ProtectedRoute>}/>
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );

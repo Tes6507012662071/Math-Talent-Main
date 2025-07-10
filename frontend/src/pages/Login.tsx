@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AuthFormInput from "../components/AuthFormInput";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../api/auth";
 
 const Login: React.FC = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -10,21 +11,17 @@ const Login: React.FC = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // ✅ จำลองการ Login (ในอนาคตใช้ API)
-    if (form.email === "test@example.com" && form.password === "123456") {
-      // ✅ เก็บข้อมูลลง localStorage
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", form.email);
-
-      // ✅ เปลี่ยนหน้าไป Landing
-      navigate("/landing");
-    } else {
-      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-    }
-  };
+  try {
+    const data = await loginUser(form.email, form.password);
+    localStorage.setItem("token", data.token);
+    navigate("/profile");
+  } catch (err: any) {
+    alert(err.message || "เข้าสู่ระบบล้มเหลว");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
