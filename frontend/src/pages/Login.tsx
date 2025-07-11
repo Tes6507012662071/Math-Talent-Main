@@ -11,18 +11,21 @@ const Login: React.FC = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted with:", form);
 
-  try {
-    const data = await loginUser(form.email, form.password);
-    localStorage.setItem("token", data.token);
-    navigate("/profile");
-  } catch (err: any) {
-    alert(err.message || "เข้าสู่ระบบล้มเหลว");
-  }
-};
-
+    try {
+      const data = await loginUser(form.email, form.password);
+      console.log("Login success, token:", data.token);
+      localStorage.setItem("token", data.token);
+      navigate("/profile");
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      alert(err.message || "เข้าสู่ระบบล้มเหลว");
+    }
+  };
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">

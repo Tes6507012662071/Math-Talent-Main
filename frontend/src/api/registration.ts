@@ -10,7 +10,6 @@ export const uploadPaymentSlip = async (token: string, registrationId: string, f
     body: formData,
   });
 
-
   if (!res.ok) {
     throw new Error("Upload failed");
   }
@@ -27,4 +26,3 @@ export const getMyRegisteredEvents = async (token: string) => {
   if (!res.ok) throw new Error("Failed to fetch registered events");
   return res.json();
 };
-
