@@ -15,6 +15,8 @@ export const loginUser = async (email: string, password: string) => {
     const error = await response.json();
     throw new Error(error.message || "เข้าสู่ระบบไม่สำเร็จ");
   }
+  
+  console.log("📌 Login successful, received token");
 
   return response.json(); // { token: "..." }
 };

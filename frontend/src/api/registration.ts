@@ -1,8 +1,10 @@
+const REACT_APP_API_URL="http://localhost:5000/api"
+
 export const uploadPaymentSlip = async (token: string, registrationId: string, file: File) => {
   const formData = new FormData();
   formData.append("slip", file);
 
-  const res = await fetch(`${process.env.REACT_APP_API_BASE}/api/registration/upload-slip/${registrationId}`, {
+  const res = await fetch(`${REACT_APP_API_URL}/registration/upload-slip/${registrationId}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -18,7 +20,7 @@ export const uploadPaymentSlip = async (token: string, registrationId: string, f
 };
 
 export const getMyRegisteredEvents = async (token: string) => {
-  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/registration/my`, {
+  const res = await fetch(`${REACT_APP_API_URL}/registration/myevents`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
