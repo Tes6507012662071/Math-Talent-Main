@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL = "http://localhost:5000/api";
 
 export const registerUser = async (data: {
   name: string;
@@ -16,5 +16,14 @@ export const loginUser = async (data: {
   password: string;
 }) => {
   const res = await axios.post(`${API_URL}/auth/login`, data);
+  return res.data;
+};
+
+export const fetchUserProfile = async (token: string) => {
+  const res = await axios.get(`${API_URL}/auth/profile`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return res.data;
 };

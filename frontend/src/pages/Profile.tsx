@@ -14,7 +14,7 @@ interface EventStatus {
 const Profile: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
-  const [loading, setLoading] = useState(true); // ⬅ แยก loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,8 +36,12 @@ const Profile: React.FC = () => {
       })
       .catch((err) => {
         console.error("❌ เกิด error ขณะโหลดข้อมูล:", err);
-        localStorage.removeItem("token");
-        alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+        } else {
+          alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        }
       })
       .finally(() => setLoading(false));
   }, []);
