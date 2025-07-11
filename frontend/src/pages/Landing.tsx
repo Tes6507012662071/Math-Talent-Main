@@ -82,7 +82,7 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <button className="text-blure-600"><Link to="/profile2" className="text-white-600">โปรไฟล์</Link></button>
+      <button className="text-blure-600"><Link to="/profile" className="text-white-600">โปรไฟล์</Link></button>
 
       <Footer />
     </div>

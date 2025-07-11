@@ -1,21 +1,16 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
   
-  useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const storedUsername = localStorage.getItem("username");
-    setIsLoggedIn(loggedIn);
-    setUsername(storedUsername);
-  }, []);
+  // Use AuthContext instead of localStorage
+  const { user, isAuthenticated, logout, loading } = useAuth();
 
   const toggleDropdown = (key: string) => {
     setOpenDropdown((prev) => (prev === key ? null : key));
@@ -35,6 +30,11 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = "/";
+  };
 
   const dropdownMenus = [
     {
@@ -84,19 +84,17 @@ const Navbar = () => {
             </div>
 
             {/* Navigation Buttons */}
-            {isLoggedIn ? (
+            {loading ? (
+              <div className="text-gray-500">Loading...</div>
+            ) : isAuthenticated && user ? (
               <>
-                <a href="/profile" className="text-gray-700 hover:text-blue-600">
-                  👤 {username || "Profile"}
+                <a href="/profile" className="text-gray-700 hover:text-blue-600 flex items-center space-x-2">
+                  <span>👤</span>
+                  <span className="hidden sm:inline">{user.name}</span>
                 </a>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("isLoggedIn");
-                    localStorage.removeItem("username");
-                    setIsLoggedIn(false);
-                    window.location.href = "/"; // หรือ refresh หน้า
-                  }}
-                  className="text-red-600 hover:text-red-800 ml-4"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-800 ml-4 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
                 >
                   Logout
                 </button>
@@ -127,7 +125,7 @@ const Navbar = () => {
           </button>
         </div>
 
-                {/* Backdrop */}
+        {/* Backdrop */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
@@ -152,6 +150,21 @@ const Navbar = () => {
               <X className="w-5 h-5 text-gray-700" />
             </button>
           </div>
+
+          {/* User Info in Sidebar (mobile) */}
+          {isAuthenticated && user && (
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">{user.name}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* เนื้อหาเมนู */}
           <div className="p-4 space-y-2">
@@ -187,9 +200,20 @@ const Navbar = () => {
                 )}
               </div>
             ))}
+
+            {/* Logout in Sidebar for mobile */}
+            {isAuthenticated && (
+              <div className="pt-4 border-t">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left text-red-600 hover:text-red-800 py-2 px-2 hover:bg-red-50 rounded-lg"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
       </nav>
 
       {/* Spacer */}
