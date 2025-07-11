@@ -3,62 +3,74 @@ import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 
 interface EventStatus {
+  _id: string;
   event: {
     title: string;
     date: string;
   };
-  status: string; 
+  status: string;
 }
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
+  const [loading, setLoading] = useState(true); // ⬅ แยก loading state
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      console.warn("ไม่พบ token ใน localStorage");
+      setLoading(false);
+      return;
+    }
 
-    fetchUserProfile(token)
-      .then(setUser)
-      .catch(() => {
+    console.log("📌 ใช้ token:", token);
+
+    Promise.all([
+      fetchUserProfile(token),
+      getMyRegisteredEvents(token),
+    ])
+      .then(([userData, registeredEvents]) => {
+        setUser(userData);
+        setEvents(registeredEvents);
+      })
+      .catch((err) => {
+        console.error("❌ เกิด error ขณะโหลดข้อมูล:", err);
         localStorage.removeItem("token");
         alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
-      });
-
-    getMyRegisteredEvents(token)
-      .then(setEvents)
-      .catch(() => {
-        console.log("โหลด event ไม่ได้");
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const handleUploadSlip = async (registrationId: string) => {
-  const fileInput = document.createElement("input");
-  fileInput.type = "file";
-  fileInput.accept = "image/*";
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
 
-  fileInput.onchange = async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
+    fileInput.onchange = async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-      await uploadPaymentSlip(token, registrationId, file);
-      alert("อัปโหลดสลิปสำเร็จ");
+        await uploadPaymentSlip(token, registrationId, file);
+        alert("อัปโหลดสลิปสำเร็จ");
 
-      const updatedEvents = await getMyRegisteredEvents(token);
-      setEvents(updatedEvents);
-    } catch (error) {
-      alert("เกิดข้อผิดพลาดในการอัปโหลด");
-    }
+        const updatedEvents = await getMyRegisteredEvents(token);
+        setEvents(updatedEvents);
+      } catch (error) {
+        console.error("❌ อัปโหลดสลิปล้มเหลว:", error);
+        alert("เกิดข้อผิดพลาดในการอัปโหลด");
+      }
+    };
+
+    fileInput.click();
   };
 
-  fileInput.click();
-};
-
-  if (!user) return <div className="p-8 text-center">กำลังโหลด...</div>;
+  if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
+  if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -73,18 +85,20 @@ const Profile: React.FC = () => {
           {events.map((reg, idx) => (
             <li key={idx} className="border p-4 rounded shadow-sm">
               <h3 className="font-semibold">{reg.event.title}</h3>
-              <p className="text-sm text-gray-500">วันสอบ: {new Date(reg.event.date).toLocaleDateString()}</p>
+              <p className="text-sm text-gray-500">
+                วันสอบ: {new Date(reg.event.date).toLocaleDateString()}
+              </p>
               <p className="mt-2">
                 <span className="font-medium">สถานะ:</span> {reg.status}
               </p>
-                  {/* ⬇⬇⬇ เพิ่มจากตรงนี้เข้าไป */}
-                {reg.status === "pending" && (
-                  <button
-                    onClick={() => handleUploadSlip((reg as any)._id)}
-                    className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
-                    อัปโหลดสลิป
-                  </button>
-                )}
+              {reg.status === "pending" && (
+                <button
+                  onClick={() => handleUploadSlip(reg._id)}
+                  className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                >
+                  อัปโหลดสลิป
+                </button>
+              )}
             </li>
           ))}
         </ul>

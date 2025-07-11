@@ -113,7 +113,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: CustomRequest, res: Response) => {
   try {
-    const user = await User.findById(req.user?.id).select("-password");
+    const user = await User.findById(req.userId).select("-password");
     res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: "Cannot fetch user", error: err });
