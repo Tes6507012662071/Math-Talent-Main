@@ -6,7 +6,6 @@ import Register from "./pages/Register";
 import EventDetail from "./pages/EventDetail";
 import Apply from "./pages/Apply";
 import Profile from "./pages/Profile";
-import Profile2 from "./pages/Profile2";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 
@@ -23,7 +22,6 @@ const App: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/apply/:eventId" element={<Apply />} />
-        <Route path="/profile2" element={<Profile2 />} />
         <Route path="/profile"element={<ProtectedRoute><Profile /></ProtectedRoute>}/>
         <Route path="/profile" element={<Profile />} />
       </Routes>
