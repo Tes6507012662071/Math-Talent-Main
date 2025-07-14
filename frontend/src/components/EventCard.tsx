@@ -25,8 +25,8 @@ const EventCard: React.FC<Props> = ({ event }) => {
       <h3 className="text-lg font-semibold">{event.title}</h3>
       <p className="text-sm text-gray-600">{event.date} @ {event.location}</p>
       <p className="my-2 text-gray-700">{event.description}</p>
-      <div className="flex justify-end space-x-2">
-        <a href={`/events/${event.id}`} className="text-blue-600 hover:underline">ดูรายละเอียด</a>
+      <div className="flex justify-end space-x-2 mt-6">
+        <a href={`/events/${event.id}`} className="text-blue-600 hover:underline">More</a>
         <button 
           onClick={handleRegisterClick}
           className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
