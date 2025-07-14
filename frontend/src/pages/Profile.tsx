@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 interface EventStatus {
   _id: string;
@@ -77,6 +79,9 @@ const Profile: React.FC = () => {
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
   return (
+    <>
+    <Navbar />
+
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">สวัสดีคุณ {user.name}</h1>
       <p className="text-gray-600 mb-6">Email: {user.email}</p>
@@ -108,6 +113,9 @@ const Profile: React.FC = () => {
         </ul>
       )}
     </div>
+    
+    <Footer />
+    </>
   );
 };
 

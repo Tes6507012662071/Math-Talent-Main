@@ -71,9 +71,12 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Events Section */}
+      <div className="lg:text-center">
+        <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">Events</h2>
+      </div>
+
       <section id="events" className="px-6 py-12">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">Event</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {events.map((event) => (
               <EventCard key={event.id} event={event} />
@@ -81,8 +84,6 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </section>
-
-      <button className="text-blure-600"><Link to="/profile" className="text-white-600">โปรไฟล์</Link></button>
 
       <Footer />
     </div>
