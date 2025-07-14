@@ -1,6 +1,6 @@
 // backend/routes/events.routes.ts
 import express from "express";
-import { getAllEvents } from "../controllers/eventController";
+import { getAllEvents } from "../controllers/event.controller";
 
 const router = express.Router();
 
