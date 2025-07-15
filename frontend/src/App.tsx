@@ -7,6 +7,8 @@ import EventDetail from "./pages/EventDetail";
 import Apply from "./pages/Apply";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import About from "./pages/About";
+import Testprofile from "./pages/Testprofile";
 
 const App: React.FC = () => {
   return (
@@ -18,6 +20,8 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/events/:id" element={<EventDetail />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/testprofile" element={<Testprofile />} />
         
         {/* Protected Routes */}
         <Route 

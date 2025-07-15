@@ -221,8 +221,12 @@ const Navbar = () => {
 
       {/* 🔽 แถบสีเต็มความกว้างหน้าเว็บ */}
       <div className="w-full bg-[#003366] py-3 px-4 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center mt-4">
-          {/* future content */}
+        <div className="max-w-7xl mx-auto flex justify-center items-center gap-20 text-white font-medium flex-col md:flex-row text-center md:text-left
+">
+          <a href="/" className="hover:underline hover:text-gray-200 transition-colors">Home</a>
+          <a href="/events" className="hover:underline hover:text-gray-200 transition-colors">Event</a>
+          <a href="/about" className="hover:underline hover:text-gray-200 transition-colors">About</a>
+          <a href="/testprofile" className="hover:underline hover:text-gray-200 transition-colors">Profile</a>
         </div>
       </div>
     </>

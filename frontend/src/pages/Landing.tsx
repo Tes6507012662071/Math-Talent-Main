@@ -25,6 +25,24 @@ const Landing: React.FC = () => {
       registrationType: "individual",
       detail: ""
     },
+    {
+      id: "3",
+      title: "Lorem",
+      description: "Lorem",
+      date: "Lorem",
+      location: "Lorem",
+      registrationType: "individual",
+      detail: ""
+    },
+    {
+      id: "4",
+      title: "Lorem",
+      description: "Lorem",
+      date: "Lorem",
+      location: "Lorem",
+      registrationType: "individual",
+      detail: ""
+    },
   ];
 
   return (
@@ -71,11 +89,11 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Events Section */}
-      <div className="lg:text-center">
+      <div className="lg:text-center bg-gray-50 py-12">
         <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">Events</h2>
       </div>
 
-      <section id="events" className="px-6 py-12">
+      <section id="events" className="px-6 py-12 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {events.map((event) => (
