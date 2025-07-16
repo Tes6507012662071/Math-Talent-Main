@@ -19,7 +19,7 @@ const Login: React.FC = () => {
       const data = await loginUser(form.email, form.password);
       console.log("Login success, token:", data.token);
       localStorage.setItem("token", data.token);
-      navigate("/profile");
+      navigate("/landing");
     } catch (err: any) {
       console.error("Login failed:", err);
       alert(err.message || "เข้าสู่ระบบล้มเหลว");

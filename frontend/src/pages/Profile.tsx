@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-//import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, Calendar, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, Calendar, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 import Navbar from "../components/Navbar";
@@ -76,12 +76,91 @@ const Profile: React.FC = () => {
     fileInput.click();
   };
 
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+
   if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
+  //const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'activity' | 'certificate'>('dashboard');
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // Redirect to login page
+  };
+
+  
+  
   return (
     <>
     <Navbar />
+    <div className="min-h-screen flex bg-gray-100 p-4">
+      {/* Sidebar with rounded corners */}
+      <aside className="w-64 h-screen bg-white shadow-lg rounded-2xl flex flex-col justify-between overflow-hidden">
+          <div>
+          <div className="flex items-center gap-3 px-6 py-4 border-b">
+              <User className="h-8 w-8 text-blue-600" />
+              <h1 className="text-lg font-bold text-gray-800">Profile Dashboard</h1>
+          </div>
+          <nav className="mt-4">
+              <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
+                  activeTab === 'dashboard'
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              >
+              <Home size={16} />
+              Dashboard
+              </button>
+              <button
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
+                  activeTab === 'profile'
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              >
+              <Settings size={16} />
+              Manage Profile
+              </button>
+              <button
+              onClick={() => setActiveTab('activity')}
+              className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
+                  activeTab === 'activity'
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              >
+              <FileText size={16} />
+              Activity List
+              </button>
+              <button
+              onClick={() => setActiveTab('certificate')}
+              className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
+                  activeTab === 'certificate'
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              >
+              <Award size={16} />
+              Certificates
+              </button>
+          </nav>
+          </div>
+          <div className="px-6 py-4 border-t">
+          <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm"
+          >
+              <LogOut size={16} />
+              Log Out
+          </button>
+          </div>
+      </aside>
+    </div>
+
+    
 
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">สวัสดีคุณ {user.name}</h1>
