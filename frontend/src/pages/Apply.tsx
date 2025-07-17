@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { submitIndividualForm } from "../api/individualForm";
 
 interface Student {
   fullname: string;
@@ -55,16 +57,33 @@ const IndividualForm = ({ eventId }: { eventId: string }) => {
     email: "",
     note: "",
   });
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("กรุณาล็อกอินก่อนสมัคร");
+      return;
+    }
     console.log("🎯 สมัครกิจกรรม:", eventId, form);
     alert("สมัครสำเร็จ! (mock)");
+
+    //const token = localStorage.getItem('token');
     // 🔜 ต่อ backend / บันทึกในฐานข้อมูล
+    try {
+      await submitIndividualForm(token, { eventId, ...form });
+      alert("สมัครสำเร็จ!");
+      console.log("✅ eventId จาก URL:", eventId);
+      navigate(`/events/${eventId}`);
+    } catch (error: any) {
+      alert("เกิดข้อผิดพลาด: " + (error.message || "ไม่ทราบสาเหตุ"));
+      console.error(error);
+    }
   };
 
   return (
@@ -164,6 +183,7 @@ const SchoolUploadForm = ({ eventId }: { eventId: string }) => {
   const [file, setFile] = useState<File | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -207,7 +227,26 @@ const SchoolUploadForm = ({ eventId }: { eventId: string }) => {
 
     alert("ส่งข้อมูลเรียบร้อย (mock)");
 
+    const token = localStorage.getItem('token');
     // TODO: เชื่อม backend
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/register/school`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json","Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ eventId, students }),
+      });
+
+      if (response.ok) {
+        alert("ส่งข้อมูลเรียบร้อย!");
+        navigate(`/events/${eventId}`);
+      } else {
+        const err = await response.json();
+        alert("เกิดข้อผิดพลาด: " + err.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    }
   };
 
   return (

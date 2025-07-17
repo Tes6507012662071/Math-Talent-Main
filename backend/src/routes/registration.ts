@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { uploadSlip } from "../controllers/registrationController";
+import { uploadSlip } from "../controllers/registration.controller";
 import authMiddleware from "../middleware/authMiddleware";
 
 
