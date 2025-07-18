@@ -4,6 +4,6 @@ import { registerIndividual } from "../controllers/individualRegistration.contro
 
 const router = express.Router();
 
-router.post('/individual-registration', authMiddleware, registerIndividual);
+router.post('/', authMiddleware, registerIndividual);
 
 export default router;

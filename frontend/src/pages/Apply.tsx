@@ -71,9 +71,7 @@ const IndividualForm = ({ eventId }: { eventId: string }) => {
       return;
     }
     console.log("🎯 สมัครกิจกรรม:", eventId, form);
-    alert("สมัครสำเร็จ! (mock)");
-
-    //const token = localStorage.getItem('token');
+    
     // 🔜 ต่อ backend / บันทึกในฐานข้อมูล
     try {
       await submitIndividualForm(token, { eventId, ...form });

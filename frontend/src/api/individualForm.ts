@@ -1,8 +1,8 @@
-const REACT_APP_API_URL="http://localhost:5000/api"
+const API_URL = "http://localhost:5000/api";
 
 // ฟังก์ชันส่งข้อมูลแบบฟอร์มบุคคลธรรมดา (Individual)
 export const submitIndividualForm = async (token: string, data: any) => {
-    const response = await fetch(`${REACT_APP_API_URL}/individual-registration`, {
+    const response = await fetch(`${API_URL}/individual-registration`, {
         method: "POST",
         headers: {
         "Content-Type": "application/json",
