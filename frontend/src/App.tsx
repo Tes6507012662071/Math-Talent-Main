@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import About from "./pages/About";
 import Testprofile from "./pages/Testprofile";
 
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -22,6 +23,8 @@ const App: React.FC = () => {
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/about" element={<About />} />
         <Route path="/testprofile" element={<Testprofile />} />
+
+        {/* Test Routes */}
         
         {/* Protected Routes */}
         <Route 
