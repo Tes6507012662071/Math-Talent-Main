@@ -27,6 +27,7 @@ const Testprofile: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [registrations, setRegistrations] = useState([]);
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>('dashboard');

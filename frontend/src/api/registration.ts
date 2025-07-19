@@ -28,3 +28,4 @@ export const getMyRegisteredEvents = async (token: string) => {
   if (!res.ok) throw new Error("Failed to fetch registered events");
   return res.json();
 };
+
