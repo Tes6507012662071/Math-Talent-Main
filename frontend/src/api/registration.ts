@@ -20,7 +20,7 @@ export const uploadPaymentSlip = async (token: string, registrationId: string, f
 };
 
 export const getMyRegisteredEvents = async (token: string) => {
-  const res = await fetch(`${REACT_APP_API_URL}/registration/myevents`, {
+  const res = await fetch(`${REACT_APP_API_URL}/individual-registration/myevents`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

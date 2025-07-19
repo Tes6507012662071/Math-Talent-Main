@@ -39,3 +39,16 @@ export const registerIndividual = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
   }
 };
+
+
+export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const registrations = await IndividualRegistration.find({ userId });
+    res.json(registrations);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
