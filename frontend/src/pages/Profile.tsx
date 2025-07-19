@@ -5,12 +5,20 @@ import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+interface EventDetail {
+  _id?: string;
+  id?: string;
+  title: string;
+  description?: string;
+  date: string;
+  location?: string;
+  detail?: string;
+  registrationType?: string;
+}
+
 interface EventStatus {
   _id: string;
-  event: {
-    title: string;
-    date: string;
-  };
+  event: EventDetail;
   status: string;
 }
 
@@ -47,6 +55,28 @@ const Testprofile: React.FC = () => {
 
   const [editedProfile, setEditedProfile] = useState(userProfile);
 
+  // Helper function to safely get event title
+  const getEventTitle = (eventData: EventDetail): string => {
+    return eventData?.title || 'Untitled Event';
+  };
+
+  // Helper function to safely get event date
+  const getEventDate = (eventData: EventDetail): string => {
+    if (eventData?.date) {
+      // If date is in ISO format, format it nicely
+      const date = new Date(eventData.date);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      return eventData.date;
+    }
+    return 'No date specified';
+  };
+
   // Load data from API
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -64,7 +94,24 @@ const Testprofile: React.FC = () => {
     ])
       .then(([userData, registeredEvents]) => {
         setUser(userData);
-        setEvents(registeredEvents);
+        
+        // Ensure events have proper structure
+        const processedEvents = registeredEvents.map((eventItem: any) => ({
+          _id: eventItem._id || eventItem.id,
+          event: {
+            _id: eventItem.event?._id || eventItem.event?.id,
+            id: eventItem.event?.id || eventItem.event?._id,
+            title: eventItem.event?.title || eventItem.title || 'Untitled Event',
+            description: eventItem.event?.description || eventItem.description,
+            date: eventItem.event?.date || eventItem.date,
+            location: eventItem.event?.location || eventItem.location,
+            detail: eventItem.event?.detail || eventItem.detail,
+            registrationType: eventItem.event?.registrationType || eventItem.registrationType
+          },
+          status: eventItem.status || 'registered'
+        }));
+        
+        setEvents(processedEvents);
         
         // Update profile state with API data
         setUserProfile({
@@ -297,8 +344,8 @@ const Testprofile: React.FC = () => {
                       <FileText className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">{event.event.title}</h3>
-                      <p className="text-sm text-gray-600">{event.event.date}</p>
+                      <h3 className="font-medium text-gray-800">{getEventTitle(event.event)}</h3>
+                      <p className="text-sm text-gray-600">{getEventDate(event.event)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -550,8 +597,11 @@ const Testprofile: React.FC = () => {
           events.map((event) => (
             <div key={event._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h4 className="font-medium text-gray-800">{event.event.title}</h4>
-                <p className="text-sm text-gray-600">Date: {event.event.date}</p>
+                <h4 className="font-medium text-gray-800">{getEventTitle(event.event)}</h4>
+                <p className="text-sm text-gray-600">Date: {getEventDate(event.event)}</p>
+                {event.event.location && (
+                  <p className="text-sm text-gray-500">Location: {event.event.location}</p>
+                )}
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
                   event.status === 'completed' ? 'bg-green-100 text-green-800' : 
                   event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
@@ -572,7 +622,7 @@ const Testprofile: React.FC = () => {
                 )}
                 {event.status === 'completed' && (
                   <button
-                    onClick={() => handleDownloadCertificate(event.event.title)}
+                    onClick={() => handleDownloadCertificate(getEventTitle(event.event))}
                     className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Download size={16} />
@@ -600,12 +650,15 @@ const Testprofile: React.FC = () => {
             <div className="flex items-center gap-3 mb-4">
               <Award className="h-8 w-8 text-yellow-500" />
               <div>
-                <h3 className="font-semibold text-gray-800">{event.event.title}</h3>
-                <p className="text-sm text-gray-600">Completed on {event.event.date}</p>
+                <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
+                <p className="text-sm text-gray-600">Completed on {getEventDate(event.event)}</p>
+                {event.event.location && (
+                  <p className="text-xs text-gray-500">{event.event.location}</p>
+                )}
               </div>
             </div>
             <button
-              onClick={() => handleDownloadCertificate(event.event.title)}
+              onClick={() => handleDownloadCertificate(getEventTitle(event.event))}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Download size={16} />
@@ -623,10 +676,6 @@ const Testprofile: React.FC = () => {
       )}
     </div>
   );
-
-  if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
-  if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
-
   return (
     <>
       <Navbar />
