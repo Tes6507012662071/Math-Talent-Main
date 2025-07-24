@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import IndividualRegistration from '../models/IndividualRegistration';
+import { title } from 'process';
 
 interface CustomRequest extends Request {
   user?: { id: string };
@@ -48,7 +49,7 @@ export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const registrations = await IndividualRegistration.find({ userId })
-    .populate("eventId", "title"); // ✅ ดึงเฉพาะ title
+    .populate("eventId"); // ✅ populate
     
     res.json(registrations);
   } catch (error) {
