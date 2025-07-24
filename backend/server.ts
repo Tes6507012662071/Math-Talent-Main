@@ -22,6 +22,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import app from "./src/app";
+import seedEvents from "./seedEvents"; // ✅ เพิ่มตรงนี้
 
 // โหลด ENV config
 dotenv.config();
@@ -31,8 +32,10 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/math-talen
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => {
+  .then(async() => {
     console.log("✅ MongoDB connected");
+    // ✅ รัน seed หลังเชื่อมต่อ Mongo สำเร็จ
+    await seedEvents();
     app.listen(PORT, () => {
       console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
