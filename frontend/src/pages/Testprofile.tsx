@@ -14,7 +14,7 @@ interface EventStatus {
   status: string;
 }
 
-const Profile: React.FC = () => {
+const Testprofile: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,4 +199,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile;
+export default Testprofile;

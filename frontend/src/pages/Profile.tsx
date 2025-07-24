@@ -30,7 +30,7 @@ interface UploadedFile {
   file: File;
 }
 
-const Testprofile: React.FC = () => {
+const Profile: React.FC = () => {
   // API-related state
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
@@ -56,26 +56,25 @@ const Testprofile: React.FC = () => {
   const [editedProfile, setEditedProfile] = useState(userProfile);
 
   // Helper function to safely get event title
-  const getEventTitle = (eventData: EventDetail): string => {
-    return eventData?.title || 'Untitled Event';
+  const getEventTitle = (eventData?: EventDetail): string => {
+    if (!eventData) return 'Untitled Event';
+    return eventData.title || 'Untitled Event';
   };
 
-  // Helper function to safely get event date
-  const getEventDate = (eventData: EventDetail): string => {
-    if (eventData?.date) {
-      // If date is in ISO format, format it nicely
-      const date = new Date(eventData.date);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('th-TH', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-      }
-      return eventData.date;
-    }
-    return 'No date specified';
+  const getEventDate = (dateInput?: string | Date): string => {
+    if (!dateInput) return 'ยังไม่ระบุวันที่';
+
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return 'รูปแบบวันที่ไม่ถูกต้อง';
+
+    return date.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
+
+  
 
   // Load data from API
   useEffect(() => {
@@ -99,17 +98,19 @@ const Testprofile: React.FC = () => {
         const processedEvents = registeredEvents.map((eventItem: any) => ({
           _id: eventItem._id || eventItem.id,
           event: {
-            _id: eventItem.event?._id || eventItem.event?.id,
-            id: eventItem.event?.id || eventItem.event?._id,
-            title: eventItem.event?.title || eventItem.title || 'Untitled Event',
-            description: eventItem.event?.description || eventItem.description,
-            date: eventItem.event?.date || eventItem.date,
-            location: eventItem.event?.location || eventItem.location,
-            detail: eventItem.event?.detail || eventItem.detail,
-            registrationType: eventItem.event?.registrationType || eventItem.registrationType
+            _id: eventItem.eventId?._id,
+            title: eventItem.eventId?.title || 'Untitled Event',
+            description: eventItem.eventId?.description,
+            date: eventItem.eventId?.date,
+            location: eventItem.eventId?.location,
+            detail: eventItem.eventId?.detail,
+            registrationType: eventItem.eventId?.registrationType
           },
           status: eventItem.status || 'registered'
         }));
+
+
+        console.log("Processed events for state:", processedEvents);
         
         setEvents(processedEvents);
         
@@ -213,6 +214,8 @@ const Testprofile: React.FC = () => {
 
   if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
+
+  console.log("events state =", events); // <-- ใส่ตรงนี้จะเห็นทุกครั้งที่ render
 
   // Dashboard Tab
   const renderDashboardTab = () => {
@@ -345,7 +348,7 @@ const Testprofile: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-800">{getEventTitle(event.event)}</h3>
-                      <p className="text-sm text-gray-600">{getEventDate(event.event)}</p>
+                      <p className="text-sm text-gray-600">{getEventDate(event.event?.date)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -536,6 +539,7 @@ const Testprofile: React.FC = () => {
       </div>
     </div>
   );
+  
 
   // Activity Tab
   const renderActivityTab = () => (
@@ -594,35 +598,39 @@ const Testprofile: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
         {events.length > 0 ? (
-          events.map((event) => (
-            <div key={event._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          events.map((e, i) => (
+            <div key={e._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <h4 className="font-medium text-gray-800">{getEventTitle(event.event)}</h4>
-                <p className="text-sm text-gray-600">Date: {getEventDate(event.event)}</p>
-                {event.event.location && (
-                  <p className="text-sm text-gray-500">Location: {event.event.location}</p>
+                <h4 className="font-medium text-gray-800">{e.event.title}</h4>
+                <p className="text-sm text-gray-600">Date: {e.event.date}</p>
+                {e.event.location && (
+                  <p className="text-sm text-gray-500">Location: {e.event.location}</p>
                 )}
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                  event.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                  event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                  'bg-blue-100 text-blue-800'
-                }`}>
-                  {event.status}
+                <span
+                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                    e.status === "completed"
+                      ? "bg-green-100 text-green-800"
+                      : e.status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-blue-100 text-blue-800"
+                  }`}
+                >
+                  {e.status}
                 </span>
               </div>
               <div className="flex gap-2">
-                {event.status === 'pending' && (
+                {e.status === "pending" && (
                   <button
-                    onClick={() => handleUploadSlip(event._id)}
+                    onClick={() => handleUploadSlip(e._id)}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Upload size={16} />
                     Upload Slip
                   </button>
                 )}
-                {event.status === 'completed' && (
+                {e.status === "completed" && (
                   <button
-                    onClick={() => handleDownloadCertificate(getEventTitle(event.event))}
+                    onClick={() => handleDownloadCertificate(getEventTitle(e.event))}
                     className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Download size={16} />
@@ -651,7 +659,7 @@ const Testprofile: React.FC = () => {
               <Award className="h-8 w-8 text-yellow-500" />
               <div>
                 <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
-                <p className="text-sm text-gray-600">Completed on {getEventDate(event.event)}</p>
+                <p className="text-sm text-gray-600">Completed on {getEventDate(event.event?.date)}</p>
                 {event.event.location && (
                   <p className="text-xs text-gray-500">{event.event.location}</p>
                 )}
@@ -759,4 +767,4 @@ const Testprofile: React.FC = () => {
   );
 };
 
-export default Testprofile;
+export default Profile;

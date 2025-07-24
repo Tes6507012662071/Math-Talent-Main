@@ -17,9 +17,10 @@ export const registerIndividual = async (req: Request, res: Response) => {
     console.log("🔑 User ID from token:", userId);
     
     const { eventId, fullname, grade, school, phone, email, note } = req.body;
+    console.log("eventId from req.body:", eventId);
 
     const newRegistration = new IndividualRegistration({
-      eventId,
+      eventId, // ✅ ตรงกับชื่อใน schema
       fullname,
       grade,
       school,
@@ -33,7 +34,7 @@ export const registerIndividual = async (req: Request, res: Response) => {
     
     console.log("✅ Registration saved");
 
-    res.status(201).json({ success: true, message: "ลงทะเบียนเรียบร้อยแล้ว" });
+    res.status(201).json({ success: true, message: "ลงทะเบียนเรียบร้อยแล้ว", eventId });
   } catch (error) {
     console.error("❌ Register Individual Error:", error);
     res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
@@ -46,7 +47,9 @@ export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const registrations = await IndividualRegistration.find({ userId });
+    const registrations = await IndividualRegistration.find({ userId })
+    .populate("eventId", "title"); // ✅ ดึงเฉพาะ title
+    
     res.json(registrations);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });

@@ -1,49 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import EventCard from "../components/EventCard";
 import { Event } from "../types/event";
+import { fetchEvents } from "../api/events"; // สมมติเก็บฟังก์ชัน API นี้ในไฟล์นี้
 
 const Landing: React.FC = () => {
-  const events: Event[] = [
-    {
-      id: "1",
-      title: "การสอบวัดความรู้ทางคณิตศาสตร์ประจำปี 2568",
-      date: "วันเสาร์ที่ 15 พฤศจิกายน 2568",
-      location: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ (กทม.)",
-      description: "การแข่งขันสำหรับนักเรียนที่ต้องการท้าทายศักยภาพทางคณิตศาสตร์ในระดับสูงสุด",
-      registrationType: "individual",
-      detail: ""
-    },
-    {
-      id: "2",
-      title: "สอบคัดเลือกทุนคณิตศาสตร์",
-      description: "เปิดสอบคัดเลือกนักเรียนทุน Math Talent Foundation",
-      date: "5 กันยายน 2025",
-      location: "เชียงใหม่",
-      registrationType: "individual",
-      detail: ""
-    },
-    {
-      id: "3",
-      title: "Lorem",
-      description: "Lorem",
-      date: "Lorem",
-      location: "Lorem",
-      registrationType: "individual",
-      detail: ""
-    },
-    {
-      id: "4",
-      title: "Lorem",
-      description: "Lorem",
-      date: "Lorem",
-      location: "Lorem",
-      registrationType: "individual",
-      detail: ""
-    },
-  ];
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const data = await fetchEvents();
+        setEvents(data);
+      } catch (err) {
+        setError("ไม่สามารถโหลดกิจกรรมได้");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
+  if (loading) return <div>กำลังโหลดกิจกรรม...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div>
@@ -97,7 +81,7 @@ const Landing: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event._id} event={event} />
             ))}
           </div>
         </div>

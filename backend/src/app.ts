@@ -13,4 +13,5 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/registration", registrationRoutes);
 app.use("/api/individual-registration", individualRegistrationRoutes);
+app.use("/images", express.static("public/images"));
 export default app;

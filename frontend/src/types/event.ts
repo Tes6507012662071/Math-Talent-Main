@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 export interface Event {
   location: string;
-  id: string;
+  _id: string;
   title: string;
   description: string;
   date: string;

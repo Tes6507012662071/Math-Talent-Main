@@ -77,6 +77,7 @@ const IndividualForm = ({ eventId }: { eventId: string }) => {
       await submitIndividualForm(token, { eventId, ...form });
       alert("สมัครสำเร็จ!");
       console.log("✅ eventId จาก URL:", eventId);
+      // 🔄 กลับไปที่หน้ารายละเอียดกิจกรรม
       navigate(`/events/${eventId}`);
     } catch (error: any) {
       alert("เกิดข้อผิดพลาด: " + (error.message || "ไม่ทราบสาเหตุ"));

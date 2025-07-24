@@ -65,7 +65,7 @@ const EventDetail: React.FC = () => {
     if (!token) {
       navigate("/login");
     } else {
-      navigate("/register-event/" + id);
+      navigate("/apply/" + id);
     }
   };
 

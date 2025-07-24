@@ -13,7 +13,7 @@ const EventCard: React.FC<Props> = ({ event }) => {
   const handleRegisterClick = () => {
     if (isAuthenticated) {
       // User is authenticated - navigate to apply page
-      window.location.href = `/apply/${event.id}`;
+      window.location.href = `/apply/${event._id}`;
     } else {
       // User is not authenticated - redirect to login
       window.location.href = "/login";
@@ -26,7 +26,7 @@ const EventCard: React.FC<Props> = ({ event }) => {
       <p className="text-sm text-gray-600">{event.date} @ {event.location}</p>
       <p className="my-2 text-gray-700">{event.description}</p>
       <div className="flex justify-end space-x-2 mt-6">
-        <a href={`/events/${event.id}`} className="text-blue-600 hover:underline">More</a>
+        <a href={`/events/${event._id}`} className="text-blue-600 hover:underline">More</a>
         <button 
           onClick={handleRegisterClick}
           className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"

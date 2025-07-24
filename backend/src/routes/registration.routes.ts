@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/myevents", authMiddleware, async (req, res) => {
   try {
     const userId = (req as any).userId;
-    const registrations = await Registration.find({ user: userId }).populate("event");
+    const registrations = await Registration.find({ user: userId }).populate("eventId");
     res.json(registrations);
   } catch (err) {
     res.status(500).json({ message: "เกิดข้อผิดพลาด" });

@@ -1,7 +1,8 @@
+// models/IndividualRegistration.ts
 import mongoose from 'mongoose';
 
 const IndividualRegistrationSchema = new mongoose.Schema({
-  eventId: { type: String, required: true },
+  eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true }, // ✅ ใช้ ObjectId
   fullname: { type: String, required: true },
   grade: { type: String, required: true },
   school: { type: String, required: true },
