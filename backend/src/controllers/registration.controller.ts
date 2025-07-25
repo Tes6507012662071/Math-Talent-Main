@@ -9,24 +9,30 @@ interface CustomRequest extends Request {
 
 
 
-export const uploadSlip = async (req: Request, res: Response) => {
+export const uploadSlip = async (req: CustomRequest, res: Response) => {
   try {
-    const registrationId = req.params.id;
+    const eventId = req.params.id; // คือ eventId จริง ๆ
+    const userId = req.user?.id; // มาจาก middleware
     const slipPath = req.file?.path;
 
     if (!slipPath) {
       return res.status(400).json({ message: "ไม่พบไฟล์ slip" });
     }
 
-    const registration = await Registration.findByIdAndUpdate(
-      registrationId,
-      { slipUrl: slipPath, status: "slip_uploaded" },
+    const registration = await Registration.findOneAndUpdate(
+      { eventId, userId },
+      { slipUrl: slipPath, status: "pending" },
       { new: true }
     );
 
     if (!registration) {
       return res.status(404).json({ message: "ไม่พบข้อมูลการสมัคร" });
     }
+    
+    res.status(200).json({
+      message: "อัปโหลดสลิปสำเร็จและรอยืนยันจากแอดมิน",
+      registration,
+    });
 
     res.status(200).json({ message: "อัปโหลด slip สำเร็จ", registration });
   } catch (err) {
@@ -34,3 +40,4 @@ export const uploadSlip = async (req: Request, res: Response) => {
     res.status(500).json({ message: "เกิดข้อผิดพลาด" });
   }
 };
+
