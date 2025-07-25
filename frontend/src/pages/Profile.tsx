@@ -4,6 +4,8 @@ import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import axios from "axios";
+
 
 interface EventDetail {
   _id?: string;
@@ -41,6 +43,13 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  //const [uploadEventId, setUploadEventId] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<{ [eventId: string]: File | null }>({});
+  const [uploading, setUploading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
+
+
 
   // Profile state (will be populated from API)
   const [userProfile, setUserProfile] = useState({
@@ -180,7 +189,7 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  /*const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     const newFiles = files.map(file => ({
       id: Date.now() + Math.random(),
@@ -190,7 +199,91 @@ const Profile: React.FC = () => {
       file: file
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
+  };*/
+
+  const handleSlipUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    eventId: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("slip", file);
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // ✅ หลัง upload สำเร็จ ให้ update state ด้วย
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev._id === eventId ? { ...ev, status: "slip_uploaded" } : ev
+        )
+      );
+    } catch (err) {
+      console.error("❌ Upload failed", err);
+    }
   };
+
+  // ฟังก์ชันเมื่อเลือกไฟล์
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, eventId: string) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFiles((prev) => ({ ...prev, [eventId]: file }));
+  };
+
+  // ฟังก์ชันเมื่อกด Submit
+  const handleSlipSubmit = async (eventId: string) => {
+    console.log("==> Submitting for eventId:", eventId);
+    const file = selectedFiles[eventId];
+    if (!file) {
+      console.warn("No file selected for eventId:", eventId);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("slip", file);
+
+    try {
+      setUploading(true);
+      await axios.post(
+        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // เปลี่ยนสถานะเป็น pending
+      setEvents((prevEvents) =>
+        prevEvents.map((ev) =>
+          ev._id === eventId ? { ...ev, status: "pending" } : ev
+        )
+      );
+
+      setSelectedFiles((prev) => ({ ...prev, [eventId]: null }));
+
+      // ✅ แสดง popup สำเร็จ
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   const handleDownloadCertificate = (eventTitle: string) => {
     const element = document.createElement('a');
@@ -542,110 +635,105 @@ const Profile: React.FC = () => {
   
 
   // Activity Tab
-  const renderActivityTab = () => (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
-      
-      {/* File Upload Section */}
-      <div className="mb-8 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-        <div className="text-center">
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-lg font-medium text-gray-600 mb-2">Upload Activity Slip</p>
-          <p className="text-sm text-gray-500 mb-4">Select files to upload your activity documentation</p>
-          <label className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
-            <Upload size={16} />
-            Choose Files
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
-        </div>
-      </div>
+  const renderActivityTab = () => {
+    const statusLabelMap: Record<string, string> = {
+      registered: "ยังไม่ได้อัปโหลดสลิป",
+      slip_uploaded: "รอตรวจสอบ",
+      pending: "รอตรวจสอบ",
+      approved: "ผ่านการตรวจสอบแล้ว",
+      rejected: "ไม่ผ่าน กรุณาอัปโหลดใหม่",
+      completed: "เสร็จสิ้น",
+    };
 
-      {/* Uploaded Files */}
-      {uploadedFiles.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Uploaded Files</h3>
-          <div className="space-y-2">
-            {uploadedFiles.map((file) => (
-              <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-6 w-6 text-blue-600" />
+    const statusColorMap: Record<string, string> = {
+      registered: "bg-gray-100 text-gray-800",
+      slip_uploaded: "bg-yellow-100 text-yellow-800",
+      pending: "bg-yellow-100 text-yellow-800",
+      approved: "bg-blue-100 text-blue-800",
+      rejected: "bg-red-100 text-red-800",
+      completed: "bg-green-100 text-green-800",
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
+
+        {/* Success Popup */}
+        {showSuccessPopup && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+            📤 อัปโหลดสลิปสำเร็จแล้ว!
+          </div>
+        )}
+
+        {/* Events List */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
+          {events.length > 0 ? (
+            events.map((e) => (
+              <div key={e._id} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium text-gray-800">{file.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(file.size / 1024).toFixed(1)} KB • Uploaded on {file.uploadDate}
-                    </p>
+                    <h4 className="font-medium text-gray-800">{e.event.title}</h4>
+                    <p className="text-sm text-gray-600">Date: {e.event.date}</p>
+                    {e.event.location && (
+                      <p className="text-sm text-gray-500">Location: {e.event.location}</p>
+                    )}
+                    <span
+                      className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
+                        statusColorMap[e.status] || "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {statusLabelMap[e.status] || e.status}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {e.status === "registered" && (
+                      <form
+                        onSubmit={(ev) => {
+                          ev.preventDefault();
+                          handleSlipSubmit(e._id);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(event) => handleFileSelect(event, e._id)}
+                          className="border p-1 text-sm rounded-md"
+                          required
+                        />
+                        <button
+                          type="submit"
+                          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+                        >
+                          Submit
+                        </button>
+                      </form>
+                    )}
+
+                    {e.status === "completed" && (
+                      <button
+                        onClick={() => handleDownloadCertificate(getEventTitle(e.event))}
+                        className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
+                      >
+                        <Download size={16} />
+                        Certificate
+                      </button>
+                    )}
                   </div>
                 </div>
-                <button
-                  onClick={() => setUploadedFiles(prev => prev.filter(f => f.id !== file.id))}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <X size={16} />
-                </button>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-8">No events registered yet</p>
+          )}
         </div>
-      )}
-
-      {/* Events List */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
-        {events.length > 0 ? (
-          events.map((e, i) => (
-            <div key={e._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <h4 className="font-medium text-gray-800">{e.event.title}</h4>
-                <p className="text-sm text-gray-600">Date: {e.event.date}</p>
-                {e.event.location && (
-                  <p className="text-sm text-gray-500">Location: {e.event.location}</p>
-                )}
-                <span
-                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                    e.status === "completed"
-                      ? "bg-green-100 text-green-800"
-                      : e.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-blue-100 text-blue-800"
-                  }`}
-                >
-                  {e.status}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                {e.status === "pending" && (
-                  <button
-                    onClick={() => handleUploadSlip(e._id)}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Upload size={16} />
-                    Upload Slip
-                  </button>
-                )}
-                {e.status === "completed" && (
-                  <button
-                    onClick={() => handleDownloadCertificate(getEventTitle(e.event))}
-                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Download size={16} />
-                    Certificate
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center py-8">No events registered yet</p>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
+
+
 
   // Certificate Tab
   const renderCertificateTab = () => (

@@ -7,6 +7,8 @@ interface CustomRequest extends Request {
   user?: { id: string }; // เพิ่มจาก middleware
 }
 
+
+
 export const uploadSlip = async (req: Request, res: Response) => {
   try {
     const registrationId = req.params.id;

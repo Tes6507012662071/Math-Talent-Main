@@ -2,7 +2,8 @@ import express from "express";
 import authMiddleware from "../middleware/authMiddleware";
 import Registration from "../models/Registration"; // ต้องมี model นี้ก่อน
 import multer from "multer";
-const upload = multer({ dest: "uploads/" }); // หรือใช้ Cloudinary ก็ได้
+
+const upload = multer({ dest: "uploads/slips" }); // หรือใช้ Cloudinary ก็ได้
 const router = express.Router();
 
 router.get("/myevents", authMiddleware, async (req, res) => {

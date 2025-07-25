@@ -2,8 +2,8 @@ import Event, { sampleEvents } from "./src/models/Event"; // ✅ ใช้เส
 
 const seedEvents = async () => {
   try {
-    await Event.deleteMany();
-    console.log("🧹 Cleared old events");
+    //await Event.deleteMany();
+    //console.log("🧹 Cleared old events");
 
     await Event.insertMany(sampleEvents);
     console.log("🌱 Seeded events successfully");
