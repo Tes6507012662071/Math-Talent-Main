@@ -1,43 +1,59 @@
-// controllers/registrationController.ts
 import { Request, Response } from "express";
 import Registration from "../models/Registration";
-import IndividualRegistration from '../models/IndividualRegistration';
+
 
 interface CustomRequest extends Request {
-  user?: { id: string }; // เพิ่มจาก middleware
+  user?: { id: string };
 }
 
 
-
-export const uploadSlip = async (req: CustomRequest, res: Response) => {
+// ดึงข้อมูล registration ของ user คนที่ล็อกอิน (แสดง event + status)
+export const getMyEvents = async (req: CustomRequest, res: Response) => {
   try {
-    const eventId = req.params.id; // คือ eventId จริง ๆ
-    const userId = req.user?.id; // มาจาก middleware
-    const slipPath = req.file?.path;
-
-    if (!slipPath) {
-      return res.status(400).json({ message: "ไม่พบไฟล์ slip" });
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const registration = await Registration.findOneAndUpdate(
-      { eventId, userId },
-      { slipUrl: slipPath, status: "pending" },
-      { new: true }
-    );
+    const registrations = await Registration.find({ user: userId })
+      .populate("event")  // ดึงข้อมูล event มาแสดงด้วย
+      .exec();
 
-    if (!registration) {
-      return res.status(404).json({ message: "ไม่พบข้อมูลการสมัคร" });
-    }
-    
-    res.status(200).json({
-      message: "อัปโหลดสลิปสำเร็จและรอยืนยันจากแอดมิน",
-      registration,
-    });
-
-    res.status(200).json({ message: "อัปโหลด slip สำเร็จ", registration });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "เกิดข้อผิดพลาด" });
+    res.json(registrations);
+  } catch (error) {
+    console.error("getMyEvents error:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูล" });
   }
 };
 
+export const uploadSlip = async (req: CustomRequest, res: Response) => {
+  try {
+    const eventId = req.params.id;
+    const userId = req.user?.id;
+    const slipPath = req.file?.path;
+
+    console.log("📥 uploadSlip called:", { eventId, userId, slipPath });
+
+    if (!slipPath) {
+      return res.status(400).json({ message: "❌ ไม่พบไฟล์ slip" });
+    }
+
+    // ✅ ใช้ upsert: true เพื่อสร้าง record ใหม่ถ้ายังไม่มี
+    const registration = await Registration.findOneAndUpdate(
+      { event: eventId, user: userId },
+      { slipUrl: slipPath, status: "slip_uploaded" },
+      { new: true, upsert: true }   // <<<< สำคัญ
+    );
+
+    console.log("✅ Slip uploaded for registration:", registration._id);
+
+    res.status(200).json({
+      message: "📤 อัปโหลดสลิปสำเร็จและรอตรวจสอบจากแอดมิน",
+      registration,
+    });
+
+  } catch (err) {
+    console.error("❌ uploadSlip error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในเซิร์ฟเวอร์" });
+  }
+};

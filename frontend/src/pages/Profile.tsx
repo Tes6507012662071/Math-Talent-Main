@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, Calendar, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, TrendingUp, CheckCircle } from 'lucide-react';
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import axios from "axios";
 
-
 interface EventDetail {
-  _id?: string;
+  _id: string; // ✅ เปลี่ยนจาก optional ให้เป็น string แน่นอน
   id?: string;
   title: string;
   description?: string;
@@ -43,15 +42,10 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  //const [uploadEventId, setUploadEventId] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<{ [eventId: string]: File | null }>({});
   const [uploading, setUploading] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-
-
-
-  // Profile state (will be populated from API)
   const [userProfile, setUserProfile] = useState({
     name: '',
     email: '',
@@ -63,6 +57,128 @@ const Profile: React.FC = () => {
   });
 
   const [editedProfile, setEditedProfile] = useState(userProfile);
+
+  // ✅ โหลด registration ใหม่
+  const fetchRegistrations = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/registration/myevents", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      console.log("Registrations from API:", res.data);
+      setRegistrations(res.data);
+    } catch (err) {
+      console.error("โหลดข้อมูล registration ไม่สำเร็จ", err);
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("ไม่พบ token ใน localStorage");
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([
+      fetchUserProfile(token),
+      fetchRegistrations(),   // ✅ ใช้ข้อมูลจาก Registration,
+    ])
+      .then(([userData]) => {
+        setUser(userData);
+        
+        // ✅ events จะถูก set จาก fetchRegistrations() อยู่แล้ว
+        setUserProfile({
+          name: userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          department: userData.department || '',
+          position: userData.position || '',
+          joinDate: userData.joinDate || '',
+          bio: userData.bio || ''
+        });
+      })
+      .catch((err) => {
+        console.error("❌ เกิด error ขณะโหลดข้อมูล:", err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+        } else {
+          alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ✅ เมื่อเลือกไฟล์สลิป
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, regId: string) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFiles((prev) => ({ ...prev, [regId]: file }));
+  };
+
+  // ✅ อัปโหลด slip (เฉพาะของแต่ละ event)
+  const handleSlipSubmit = async (regId: string, eventId: string) => {
+    const file = selectedFiles[regId];
+    if (!file) return alert("กรุณาเลือกไฟล์ก่อน");
+
+    const formData = new FormData();
+    formData.append("slip", file);
+
+    try {
+      setUploading(true);
+      const res = await axios.post(
+        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      alert("✅ อัปโหลดสลิปสำเร็จ");
+      setSelectedFiles((prev) => ({ ...prev, [regId]: null }));
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+
+      
+      console.log("ก่อนเรียก fetchRegistrations");
+          // อัปเดต registration ใน state โดยใช้ข้อมูลที่ได้จาก API
+      const updatedRegistration = res.data.registration;
+      setEvents((prevEvents) =>
+        prevEvents.map((e) =>
+          e._id === regId
+            ? {
+                ...e,
+                status: updatedRegistration.status,
+                slipUrl: updatedRegistration.slipUrl,
+              }
+            : e
+        )
+      );
+      console.log("หลังเรียก fetchRegistrations");
+
+
+    } catch (err) {
+      console.error("Upload slip failed:", err);
+      alert("❌ อัปโหลดสลิปไม่สำเร็จ");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+
+  // helper แปลงสถานะ
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending": return "รออัปโหลดสลิป";
+      case "slip_uploaded": return "รอตรวจสอบสลิป";
+      case "verified": return "สลิปผ่านการยืนยัน";
+      case "exam_ready": return "พร้อมสอบ";
+      case "completed": return "สำเร็จแล้ว";
+      default: return status;
+    }
+  };
 
   // Helper function to safely get event title
   const getEventTitle = (eventData?: EventDetail): string => {
@@ -200,90 +316,6 @@ const Profile: React.FC = () => {
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
   };*/
-
-  const handleSlipUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    eventId: string
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("slip", file);
-
-    try {
-      const res = await axios.post(
-        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // ✅ หลัง upload สำเร็จ ให้ update state ด้วย
-      setEvents((prev) =>
-        prev.map((ev) =>
-          ev._id === eventId ? { ...ev, status: "slip_uploaded" } : ev
-        )
-      );
-    } catch (err) {
-      console.error("❌ Upload failed", err);
-    }
-  };
-
-  // ฟังก์ชันเมื่อเลือกไฟล์
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, eventId: string) => {
-    const file = e.target.files?.[0] || null;
-    setSelectedFiles((prev) => ({ ...prev, [eventId]: file }));
-  };
-
-
-  // ฟังก์ชันเมื่อกด Submit
-  const handleSlipSubmit = async (eventId: string) => {
-    console.log("==> Submitting for eventId:", eventId);
-    const file = selectedFiles[eventId];
-    if (!file) {
-      console.warn("No file selected for eventId:", eventId);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("slip", file);
-
-    try {
-      setUploading(true);
-      await axios.post(
-        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // เปลี่ยนสถานะเป็น pending
-      setEvents((prevEvents) =>
-        prevEvents.map((ev) =>
-          ev._id === eventId ? { ...ev, status: "pending" } : ev
-        )
-      );
-
-      setSelectedFiles((prev) => ({ ...prev, [eventId]: null }));
-
-      // ✅ แสดง popup สำเร็จ
-      setShowSuccessPopup(true);
-      setTimeout(() => setShowSuccessPopup(false), 3000);
-    } catch (err) {
-      console.error("Upload failed:", err);
-    } finally {
-      setUploading(false);
-    }
-  };
 
 
   const handleDownloadCertificate = (eventTitle: string) => {
@@ -635,106 +667,111 @@ const Profile: React.FC = () => {
   );
   
 
-  // Activity Tab
-  const renderActivityTab = () => {
-    const statusLabelMap: Record<string, string> = {
-      registered: "ยังไม่ได้อัปโหลดสลิป",
-      slip_uploaded: "รอตรวจสอบ",
-      pending: "รอตรวจสอบ",
-      approved: "ผ่านการตรวจสอบแล้ว",
-      rejected: "ไม่ผ่าน กรุณาอัปโหลดใหม่",
-      completed: "เสร็จสิ้น",
-    };
-
-    const statusColorMap: Record<string, string> = {
-      registered: "bg-gray-100 text-gray-800",
-      slip_uploaded: "bg-yellow-100 text-yellow-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      approved: "bg-blue-100 text-blue-800",
-      rejected: "bg-red-100 text-red-800",
-      completed: "bg-green-100 text-green-800",
-    };
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
-
-        {/* Success Popup */}
-        {showSuccessPopup && (
-          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
-            📤 อัปโหลดสลิปสำเร็จแล้ว!
-          </div>
-        )}
-
-        {/* Events List */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
-          {events.length > 0 ? (
-            events.map((e) => (
-              <div key={e._id} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-gray-800">{e.event.title}</h4>
-                    <p className="text-sm text-gray-600">Date: {e.event.date}</p>
-                    {e.event.location && (
-                      <p className="text-sm text-gray-500">Location: {e.event.location}</p>
-                    )}
-                    <span
-                      className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
-                        statusColorMap[e.status] || "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {statusLabelMap[e.status] || e.status}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {e.status === "registered" && (
-                      <form
-                        onSubmit={(ev) => {
-                          ev.preventDefault();
-                          handleSlipSubmit(e._id);
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          onChange={(event) => handleFileSelect(event, e._id)}
-                          className="border p-1 text-sm rounded-md"
-                          required
-                        />
-                        <button
-                          type="submit"
-                          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
-                        >
-                          Submit
-                        </button>
-                      </form>
-                    )}
-
-                    {e.status === "completed" && (
-                      <button
-                        onClick={() => handleDownloadCertificate(getEventTitle(e.event))}
-                        className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
-                      >
-                        <Download size={16} />
-                        Certificate
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center py-8">No events registered yet</p>
-          )}
-        </div>
-      </div>
-    );
+// ✅ Activity Tab
+const renderActivityTab = () => {
+  const statusColorMap: Record<string, string> = {
+    pending: "bg-gray-100 text-gray-800",
+    slip_uploaded: "bg-yellow-100 text-yellow-800",
+    verified: "bg-blue-100 text-blue-800",
+    exam_ready: "bg-purple-100 text-purple-800",
+    completed: "bg-green-100 text-green-800",
   };
 
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
 
+      {/* ✅ Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+          📤 อัปโหลดสลิปสำเร็จแล้ว!
+        </div>
+      )}
+
+      {/* ✅ Events List */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
+
+        {events.length > 0 ? (
+          events.map((e) => (
+            <div
+              key={e._id}
+              className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-medium text-gray-800">{e.event.title}</h4>
+                  <p className="text-sm text-gray-600">Date: {e.event.date}</p>
+                  {e.event.location && (
+                    <p className="text-sm text-gray-500">
+                      Location: {e.event.location}
+                    </p>
+                  )}
+
+                  {/* ✅ Status Badge */}
+                  <span
+                    className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
+                      statusColorMap[e.status] || "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {getStatusText(e.status)}
+                  </span>
+                </div>
+
+                {/* ✅ Action buttons */}
+                <div className="flex gap-2">
+                  {/* ✅ Form upload เฉพาะสถานะ pending เท่านั้น */}
+                  {e.status === "registered" && (
+                    <form
+                      onSubmit={(ev) => {
+                        ev.preventDefault();
+                        handleSlipSubmit(e._id, e.event._id);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(event) => handleFileSelect(event, e._id)}
+                        className="border p-1 text-sm rounded-md"
+                        required
+                        disabled={uploading}
+                      />
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        disabled={uploading}
+                      >
+                        {uploading ? "Uploading..." : "Submit"}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* ✅ ปุ่ม Download Certificate เฉพาะ status completed */}
+                  {e.status === "completed" && (
+                    <button
+                      onClick={() =>
+                        handleDownloadCertificate(getEventTitle(e.event))
+                      }
+                      className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
+                    >
+                      <Download size={16} />
+                      Certificate
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-8">
+            No events registered yet
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
   // Certificate Tab
   const renderCertificateTab = () => (
