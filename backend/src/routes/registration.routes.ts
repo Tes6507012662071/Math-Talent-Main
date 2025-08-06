@@ -1,15 +1,19 @@
-import express from "express";
-import authMiddleware from "../middleware/authMiddleware";
-import multer from "multer";
-import { uploadSlip, getMyEvents } from "../controllers/registration.controller";
+// Updated individual-registration router
+import express from 'express';
+import { registerIndividual, getMyRegistrations, uploadSlipToIndividualRegistration } from '../controllers/individualRegistration.controller';
+import authMiddleware from '../middleware/authMiddleware';
+import multer from 'multer';
 
-const upload = multer({ dest: "uploads/slips" });
 const router = express.Router();
 
-console.log("Registration routes loaded");
+// Configure multer for file uploads
+const upload = multer({ dest: 'uploads/slips/' });
 
-router.get("/myevents", authMiddleware, getMyEvents);      // ดึงข้อมูล registration ของ user นี้
-router.post("/upload-slip/:id", authMiddleware, upload.single("slip"), uploadSlip);
+// Existing routes
+router.post('/register', authMiddleware, registerIndividual);
+router.get('/myevents', authMiddleware, getMyRegistrations);
 
+// ✅ NEW: Upload slip directly to IndividualRegistration
+router.post('/upload-slip/:id', authMiddleware, upload.single('slip'), uploadSlipToIndividualRegistration);
 
 export default router;

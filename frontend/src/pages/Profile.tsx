@@ -4,10 +4,16 @@ import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import axios from "axios";
+
+interface ExamSchedule {
+  level: string;
+  registerTime: string;
+  examTime: string;
+  examlocation: string;
+}
 
 interface EventDetail {
-  _id: string; // ✅ เปลี่ยนจาก optional ให้เป็น string แน่นอน
+  _id: string;
   id?: string;
   title: string;
   description?: string;
@@ -15,20 +21,23 @@ interface EventDetail {
   location?: string;
   detail?: string;
   registrationType?: string;
+  image?: string;
+  examSchedules?: ExamSchedule[];
 }
 
 interface EventStatus {
   _id: string;
   event: EventDetail;
   status: string;
-}
-
-interface UploadedFile {
-  id: number;
-  name: string;
-  size: number;
-  uploadDate: string;
-  file: File;
+  slipUrl?: string;
+  certificateUrl?: string;
+  registrationId?: string;
+  fullname?: string;
+  grade?: string;
+  school?: string;
+  phone?: string;
+  email?: string;
+  note?: string;
 }
 
 const Profile: React.FC = () => {
@@ -36,14 +45,13 @@ const Profile: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]);
   const [loading, setLoading] = useState(true);
-  const [registrations, setRegistrations] = useState([]);
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isEditing, setIsEditing] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<{ [eventId: string]: File | null }>({});
   const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const [userProfile, setUserProfile] = useState({
@@ -58,19 +66,22 @@ const Profile: React.FC = () => {
 
   const [editedProfile, setEditedProfile] = useState(userProfile);
 
-  // ✅ โหลด registration ใหม่
+  // ✅ SIMPLIFIED: Single function to fetch data
   const fetchRegistrations = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/registration/myevents", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      console.log("Registrations from API:", res.data);
-      setRegistrations(res.data);
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+      
+      const registrations = await getMyRegisteredEvents(token);
+      console.log("✅ Fetched registrations:", registrations);
+      setEvents(registrations);
     } catch (err) {
-      console.error("โหลดข้อมูล registration ไม่สำเร็จ", err);
+      console.error("❌ Failed to fetch registrations:", err);
+      throw err;
     }
   };
 
+  // ✅ SIMPLIFIED: Load data using single API
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -81,165 +92,11 @@ const Profile: React.FC = () => {
 
     Promise.all([
       fetchUserProfile(token),
-      fetchRegistrations(),   // ✅ ใช้ข้อมูลจาก Registration,
+      fetchRegistrations(),
     ])
       .then(([userData]) => {
         setUser(userData);
         
-        // ✅ events จะถูก set จาก fetchRegistrations() อยู่แล้ว
-        setUserProfile({
-          name: userData.name || '',
-          email: userData.email || '',
-          phone: userData.phone || '',
-          department: userData.department || '',
-          position: userData.position || '',
-          joinDate: userData.joinDate || '',
-          bio: userData.bio || ''
-        });
-      })
-      .catch((err) => {
-        console.error("❌ เกิด error ขณะโหลดข้อมูล:", err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem("token");
-          alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
-        } else {
-          alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  // ✅ เมื่อเลือกไฟล์สลิป
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, regId: string) => {
-    const file = e.target.files?.[0] || null;
-    setSelectedFiles((prev) => ({ ...prev, [regId]: file }));
-  };
-
-  // ✅ อัปโหลด slip (เฉพาะของแต่ละ event)
-  const handleSlipSubmit = async (regId: string, eventId: string) => {
-    const file = selectedFiles[regId];
-    if (!file) return alert("กรุณาเลือกไฟล์ก่อน");
-
-    const formData = new FormData();
-    formData.append("slip", file);
-
-    try {
-      setUploading(true);
-      const res = await axios.post(
-        `http://localhost:5000/api/registration/upload-slip/${eventId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      alert("✅ อัปโหลดสลิปสำเร็จ");
-      setSelectedFiles((prev) => ({ ...prev, [regId]: null }));
-      setShowSuccessPopup(true);
-      setTimeout(() => setShowSuccessPopup(false), 3000);
-
-      
-      console.log("ก่อนเรียก fetchRegistrations");
-          // อัปเดต registration ใน state โดยใช้ข้อมูลที่ได้จาก API
-      const updatedRegistration = res.data.registration;
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e._id === regId
-            ? {
-                ...e,
-                status: updatedRegistration.status,
-                slipUrl: updatedRegistration.slipUrl,
-              }
-            : e
-        )
-      );
-      console.log("หลังเรียก fetchRegistrations");
-
-
-    } catch (err) {
-      console.error("Upload slip failed:", err);
-      alert("❌ อัปโหลดสลิปไม่สำเร็จ");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-
-  // helper แปลงสถานะ
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "pending": return "รออัปโหลดสลิป";
-      case "slip_uploaded": return "รอตรวจสอบสลิป";
-      case "verified": return "สลิปผ่านการยืนยัน";
-      case "exam_ready": return "พร้อมสอบ";
-      case "completed": return "สำเร็จแล้ว";
-      default: return status;
-    }
-  };
-
-  // Helper function to safely get event title
-  const getEventTitle = (eventData?: EventDetail): string => {
-    if (!eventData) return 'Untitled Event';
-    return eventData.title || 'Untitled Event';
-  };
-
-  const getEventDate = (dateInput?: string | Date): string => {
-    if (!dateInput) return 'ยังไม่ระบุวันที่';
-
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    if (isNaN(date.getTime())) return 'รูปแบบวันที่ไม่ถูกต้อง';
-
-    return date.toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  
-
-  // Load data from API
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("ไม่พบ token ใน localStorage");
-      setLoading(false);
-      return;
-    }
-
-    console.log("📌 ใช้ token:", token);
-
-    Promise.all([
-      fetchUserProfile(token),
-      getMyRegisteredEvents(token),
-    ])
-      .then(([userData, registeredEvents]) => {
-        setUser(userData);
-        
-        // Ensure events have proper structure
-        const processedEvents = registeredEvents.map((eventItem: any) => ({
-          _id: eventItem._id || eventItem.id,
-          event: {
-            _id: eventItem.eventId?._id,
-            title: eventItem.eventId?.title || 'Untitled Event',
-            description: eventItem.eventId?.description,
-            date: eventItem.eventId?.date,
-            location: eventItem.eventId?.location,
-            detail: eventItem.eventId?.detail,
-            registrationType: eventItem.eventId?.registrationType
-          },
-          status: eventItem.status || 'registered'
-        }));
-
-
-        console.log("Processed events for state:", processedEvents);
-        
-        setEvents(processedEvents);
-        
-        // Update profile state with API data
         setUserProfile({
           name: userData.name || '',
           email: userData.email || '',
@@ -267,56 +124,72 @@ const Profile: React.FC = () => {
     setEditedProfile(userProfile);
   }, [userProfile]);
 
-  const handleUploadSlip = async (registrationId: string) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-
-    fileInput.onchange = async () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        await uploadPaymentSlip(token, registrationId, file);
-        alert("อัปโหลดสลิปสำเร็จ");
-
-        const updatedEvents = await getMyRegisteredEvents(token);
-        setEvents(updatedEvents);
-      } catch (error) {
-        console.error("❌ อัปโหลดสลิปล้มเหลว:", error);
-        alert("เกิดข้อผิดพลาดในการอัปโหลด");
-      }
-    };
-
-    fileInput.click();
+  // ✅ Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, registrationId: string) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFiles((prev) => ({ ...prev, [registrationId]: file }));
   };
 
-  const handleProfileSave = () => {
-    setUserProfile(editedProfile);
-    setIsEditing(false);
-    // TODO: Add API call to save profile changes
+  // ✅ SIMPLIFIED: Handle slip upload using IndividualRegistration ID
+  const handleSlipSubmit = async (registrationId: string) => {
+    const file = selectedFiles[registrationId];
+    if (!file) return alert("กรุณาเลือกไฟล์ก่อน");
+
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      console.log("🔄 Uploading slip for registration:", registrationId);
+      
+      await uploadPaymentSlip(token, registrationId, file);
+      
+      alert("✅ อัปโหลดสลิปสำเร็จ");
+      setSelectedFiles((prev) => ({ ...prev, [registrationId]: null }));
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+
+      // ✅ Refresh the data after successful upload
+      await fetchRegistrations();
+
+    } catch (err) {
+      console.error("❌ Upload slip failed:", err);
+      alert("❌ อัปโหลดสลิปไม่สำเร็จ");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleProfileCancel = () => {
-    setEditedProfile(userProfile);
-    setIsEditing(false);
+  // helper แปลงสถานะ
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "registered": return "ลงทะเบียนแล้ว - รออัปโหลดสลิป";
+      case "slip_uploaded": return "รอตรวจสอบสลิป";
+      case "verified": return "สลิปผ่านการยืนยัน";
+      case "exam_ready": return "พร้อมสอบ";
+      case "completed": return "สำเร็จแล้ว";
+      default: return status;
+    }
   };
 
-  /*const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
-    const newFiles = files.map(file => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      uploadDate: new Date().toISOString().split('T')[0],
-      file: file
-    }));
-    setUploadedFiles(prev => [...prev, ...newFiles]);
-  };*/
+  // Helper function to safely get event title
+  const getEventTitle = (eventData?: EventDetail): string => {
+    if (!eventData) return 'Untitled Event';
+    return eventData.title || 'Untitled Event';
+  };
 
+  const getEventDate = (dateInput?: string | Date): string => {
+    if (!dateInput) return 'ยังไม่ระบุวันที่';
+
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return 'รูปแบบวันที่ไม่ถูกต้อง';
+
+    return date.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   const handleDownloadCertificate = (eventTitle: string) => {
     const element = document.createElement('a');
@@ -335,14 +208,24 @@ const Profile: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login"; // Redirect to login page
+    window.location.href = "/login";
+  };
+
+  const handleProfileSave = () => {
+    setUserProfile(editedProfile);
+    setIsEditing(false);
+    // TODO: Add API call to save profile changes
+  };
+
+  const handleProfileCancel = () => {
+    setEditedProfile(userProfile);
+    setIsEditing(false);
   };
 
   if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
-  console.log("events state =", events); // <-- ใส่ตรงนี้จะเห็นทุกครั้งที่ render
-
+  console.log("✅ Current events state:", events);
   // Dashboard Tab
   const renderDashboardTab = () => {
     const completedEvents = events.filter(event => event.status === 'completed');
@@ -700,9 +583,10 @@ const renderActivityTab = () => {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-medium text-gray-800">{e.event.title}</h4>
-                  <p className="text-sm text-gray-600">Date: {e.event.date}</p>
-                  {e.event.location && (
+                  {/* ✅ Fixed: Use the helper function instead of direct access */}
+                  <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
+                  <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
+                  {e.event?.location && (
                     <p className="text-sm text-gray-500">
                       Location: {e.event.location}
                     </p>
@@ -720,12 +604,12 @@ const renderActivityTab = () => {
 
                 {/* ✅ Action buttons */}
                 <div className="flex gap-2">
-                  {/* ✅ Form upload เฉพาะสถานะ pending เท่านั้น */}
+                  {/* ✅ Form upload เฉพาะสถานะ registered เท่านั้น */}
                   {e.status === "registered" && (
                     <form
                       onSubmit={(ev) => {
                         ev.preventDefault();
-                        handleSlipSubmit(e._id, e.event._id);
+                        handleSlipSubmit(e._id);
                       }}
                       className="flex items-center gap-2"
                     >

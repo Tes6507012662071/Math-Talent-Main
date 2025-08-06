@@ -1,5 +1,6 @@
 const REACT_APP_API_URL="http://localhost:5000/api"
 
+// ✅ UPDATED: Upload slip to IndividualRegistration
 export const uploadPaymentSlip = async (token: string, registrationId: string, file: File) => {
   const formData = new FormData();
   formData.append("slip", file);
@@ -19,6 +20,7 @@ export const uploadPaymentSlip = async (token: string, registrationId: string, f
   return res.json();
 };
 
+// ✅ SIMPLIFIED: Just one API call needed now
 export const getMyRegisteredEvents = async (token: string) => {
   const res = await fetch(`${REACT_APP_API_URL}/individual-registration/myevents`, {
     headers: {
@@ -28,4 +30,3 @@ export const getMyRegisteredEvents = async (token: string) => {
   if (!res.ok) throw new Error("Failed to fetch registered events");
   return res.json();
 };
-
