@@ -51,25 +51,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Login function
   const login = async (email: string, password: string) => {
+    console.log("[AuthContext] Login attempt:", email);
     try {
       setLoading(true);
       
       // Call login API
       const loginResponse = await apiLogin(email, password);
+      console.log("[AuthContext] Login API response:", loginResponse);
+
       const { token: authToken, user: userData } = loginResponse;
 
       // Store token in localStorage
       localStorage.setItem('token', authToken);
       setToken(authToken);
+      console.log("[AuthContext] Token stored:", authToken);
 
       let finalUserData: User;
 
       // If user data is included in login response, use it
       if (userData) {
+        console.log("[AuthContext] Using user data from login response:", userData);
         finalUserData = userData;
       } else {
         // Otherwise, fetch user data separately
+        console.log("[AuthContext] Fetching user data with token...");
         const fetchedUserData = await fetchUserData(authToken);
+        console.log("[AuthContext] Fetched user data:", fetchedUserData);
+
         if (!fetchedUserData) {
           throw new Error('Failed to fetch user data');
         }
@@ -79,8 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify(finalUserData));
       setUser(finalUserData);
+      console.log("[AuthContext] User set in context:", finalUserData);
+
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("[AuthContext] Login error:", error);
       // Clear any stored data on login failure
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -89,8 +99,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     } finally {
       setLoading(false);
+      console.log("[AuthContext] Login process finished");
     }
   };
+
 
   // Logout function
   const logout = () => {
@@ -103,22 +115,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize auth state on app load
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log("[AuthContext] Initializing authentication state...");
       try {
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
-        
+        console.log("[AuthContext] Found saved token:", savedToken ? "YES" : "NO");
+        console.log("[AuthContext] Found saved user:", savedUser ? "YES" : "NO");
+
         if (savedToken) {
           // Try to use saved user data first
           if (savedUser) {
             try {
               const userData = JSON.parse(savedUser);
+              console.log("[AuthContext] Parsed saved user data:", userData);
               setToken(savedToken);
               setUser(userData);
               
               // Validate token in background
+              console.log("[AuthContext] Validating token...");
               const isValid = await validateToken(savedToken);
+              console.log("[AuthContext] Token valid:", isValid);
+
               if (!isValid) {
-                // Token is invalid, clear everything
+                console.warn("[AuthContext] Token invalid. Clearing storage.");
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 setToken(null);
@@ -126,47 +145,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
               return;
             } catch (parseError) {
-              console.error('Error parsing saved user data:', parseError);
+              console.error("[AuthContext] Error parsing saved user data:", parseError);
               localStorage.removeItem('user');
             }
           }
           
           // Fallback: validate token and fetch user data
+          console.log("[AuthContext] Validating token before fetching user data...");
           const isValid = await validateToken(savedToken);
+          console.log("[AuthContext] Token valid:", isValid);
           
           if (isValid) {
             setToken(savedToken);
             const userData = await fetchUserData(savedToken);
+            console.log("[AuthContext] User data fetched:", userData);
             
             if (userData) {
               localStorage.setItem('user', JSON.stringify(userData));
               setUser(userData);
             } else {
-              // Token is invalid, clear it
+              console.warn("[AuthContext] Failed to fetch user data. Clearing storage.");
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               setToken(null);
             }
           } else {
-            // Token is invalid, clear it
+            console.warn("[AuthContext] Invalid token on init. Clearing storage.");
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             setToken(null);
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error("[AuthContext] Error initializing auth:", error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
       } finally {
         setLoading(false);
+        console.log("[AuthContext] Initialization complete");
       }
     };
 
     initializeAuth();
   }, []);
+
 
   const value: AuthContextType = {
     user,

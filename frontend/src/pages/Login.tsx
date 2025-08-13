@@ -13,19 +13,30 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with:", form);
+    console.log("[Login] Form submitted:", form);
 
     try {
       const data = await loginUser(form.email, form.password);
-      console.log("Login success, token:", data.token);
+      console.log("[Login] Login success:", data);
+
       localStorage.setItem("token", data.token);
-      navigate("/landing");
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      console.log("[Login] Stored token & user in localStorage");
+
+      if (data.user.role === "admin") {
+        console.log("[Login] Redirecting to /admin/dashboard");
+        navigate("/admin/dashboard");
+      } else {
+        console.log("[Login] Redirecting to /landing");
+        navigate("/landing");
+      }
     } catch (err: any) {
-      console.error("Login failed:", err);
+      console.error("[Login] Login failed:", err);
       alert(err.message || "เข้าสู่ระบบล้มเหลว");
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
@@ -45,7 +56,6 @@ const Login: React.FC = () => {
             value={form.password}
             onChange={handleChange}
           />
-          
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
             เข้าสู่ระบบ
           </button>

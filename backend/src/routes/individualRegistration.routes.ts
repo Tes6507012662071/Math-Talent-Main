@@ -6,7 +6,6 @@ import IndividualRegistration from "../models/IndividualRegistration"; // ✅ Ch
 const router = express.Router();
 
 router.post('/', authMiddleware, registerIndividual);
-
 router.get("/myevents", authMiddleware, getMyRegistrations);
 
 export default router;
