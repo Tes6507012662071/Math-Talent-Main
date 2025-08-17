@@ -1,4 +1,4 @@
-// routes/slipRoutes.ts
+// routes/slip.routes.ts
 import express from "express";
 import Slip from "../models/Slip";
 
@@ -8,10 +8,22 @@ const router = express.Router();
 router.post("/upload", async (req, res) => {
   try {
     const { eventId, userId, slipUrl } = req.body;
-    const slip = await Slip.create({ eventId, userId, slipUrl });
+    const slip = await Slip.create({ eventId, userId, slipUrl, status: "pending" });
     res.status(201).json({ message: "Slip uploaded successfully", slip });
   } catch (err) {
     res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+// ✅ ดึงสลิปตามกิจกรรม (admin)
+router.get("/event/:eventId", async (req, res) => {
+  try {
+    const slips = await Slip.find({ eventId: req.params.eventId })
+      .populate("userId", "fullname email") // optional: if you have User model relation
+      .exec();
+    res.json(slips);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch slips" });
   }
 });
 

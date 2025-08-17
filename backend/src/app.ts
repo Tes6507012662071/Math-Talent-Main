@@ -5,6 +5,8 @@ import eventRoutes from "./routes/events.routes";
 import registrationRoutes from "./routes/registration.routes";
 import individualRegistrationRoutes from "./routes/individualRegistration.routes";
 import adminRoutes from "./routes/admin.routes";
+import solutionRoutes from "./routes/solution.routes";
+import slipRoutes from "./routes/slip.routes";
 
 const app = express();
 app.use(cors());
@@ -16,4 +18,6 @@ app.use("/api/registration", registrationRoutes);
 app.use("/api/individual-registration", individualRegistrationRoutes);
 app.use("/images", express.static("public/images"));
 app.use("/api/admin", adminRoutes);
+app.use("/api/solutions", solutionRoutes);
+app.use("/api/slips", slipRoutes);
 export default app;

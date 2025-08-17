@@ -1,20 +1,18 @@
-// models/Slip.ts
+// src/api/registration/models/Slip.ts
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface ISlip extends Document {
+  fullname: string;
   eventId: string;
-  userId: string;
-  slipUrl: string;
-  status: "pending" | "approved" | "rejected";
-  uploadedAt: Date;
+  status: string;
+  slipUrl?: string;
 }
 
-const slipSchema = new Schema<ISlip>({
+const SlipSchema = new Schema<ISlip>({
+  fullname: { type: String, required: true },
   eventId: { type: String, required: true },
-  userId: { type: String, required: true },
-  slipUrl: { type: String, required: true },
-  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-  uploadedAt: { type: Date, default: Date.now }
+  status: { type: String, default: "registered" },
+  slipUrl: { type: String },
 });
 
-export default mongoose.model<ISlip>("Slip", slipSchema);
+export default mongoose.model<ISlip>("Slip", SlipSchema);
