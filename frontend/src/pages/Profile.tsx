@@ -26,6 +26,7 @@ interface EventDetail {
 }
 
 interface EventStatus {
+  userCode: string;
   _id: string;
   event: EventDetail;
   status: string;
@@ -591,6 +592,7 @@ const renderActivityTab = () => {
                       Location: {e.event.location}
                     </p>
                   )}
+                  <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
 
                   {/* ✅ Status Badge */}
                   <span

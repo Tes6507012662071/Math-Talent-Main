@@ -111,13 +111,9 @@ const IndividualForm = ({ eventId }: { eventId: string }) => {
           required
         >
           <option value="">-- เลือกระดับชั้น --</option>
-          <option value="ป.6">ป.6</option>
-          <option value="ม.1">ม.1</option>
-          <option value="ม.2">ม.2</option>
-          <option value="ม.3">ม.3</option>
-          <option value="ม.4">ม.4</option>
-          <option value="ม.5">ม.5</option>
-          <option value="ม.6">ม.6</option>
+          <option value="ประถมศึกษาตอนปลาย">ประถมศึกษาตอนปลาย</option>
+          <option value="มัธยมศึกษาตอนต้น">มัธยมศึกษาตอนต้น</option>
+          <option value="มัธยมศึกษาตอนปลาย">มัธยมศึกษาตอนปลาย</option>
         </select>
       </div>
 
@@ -179,7 +175,7 @@ const IndividualForm = ({ eventId }: { eventId: string }) => {
 };
 
 const SchoolUploadForm = ({ eventId }: { eventId: string }) => {
-  const [file, setFile] = useState<File | null>(null);
+  //const [file, setFile] = useState<File | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -187,7 +183,7 @@ const SchoolUploadForm = ({ eventId }: { eventId: string }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setFile(f);
+    //setFile(f);
     setError(null);
 
     const reader = new FileReader();

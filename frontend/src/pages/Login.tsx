@@ -25,8 +25,8 @@ const Login: React.FC = () => {
       console.log("[Login] Stored token & user in localStorage");
 
       if (data.user.role === "admin") {
-        console.log("[Login] Redirecting to /admin/dashboard");
-        navigate("/admin/dashboard");
+        console.log("[Login] Redirecting to /landing");
+        navigate("/landing");
       } else {
         console.log("[Login] Redirecting to /landing");
         navigate("/landing");

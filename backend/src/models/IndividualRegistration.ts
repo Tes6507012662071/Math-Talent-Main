@@ -8,10 +8,9 @@ const IndividualRegistrationSchema = new mongoose.Schema({
   school: { type: String, required: true },
   phone: { type: String, required: true },
   email: { type: String, required: true },
-  note: { type: String },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  
-  // ✅ ADD: Status tracking fields
+
+  // ✅ Status tracking fields
   status: {
     type: String,
     enum: ["registered", "slip_uploaded", "verified", "exam_ready", "completed"],
@@ -19,7 +18,9 @@ const IndividualRegistrationSchema = new mongoose.Schema({
   },
   slipUrl: { type: String },
   certificateUrl: { type: String },
-  
+
+  // ✅ Add userCode field
+  userCode: { type: String, unique: true },
   createdAt: { type: Date, default: Date.now },
 });
 

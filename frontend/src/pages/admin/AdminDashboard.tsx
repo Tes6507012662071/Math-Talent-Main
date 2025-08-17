@@ -1,5 +1,7 @@
 import React, { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -129,6 +131,8 @@ const AdminDashboard: React.FC = () => {
   }, [navigate]);
 
 return (
+    <>
+      <Navbar/>
     <div className="p-6 space-y-10 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 
@@ -241,6 +245,8 @@ return (
         </table>
       </section>
     </div>
+    <Footer />
+    </>
   );
 };
 

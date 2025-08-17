@@ -53,10 +53,6 @@ export const verifySlip = async (req: Request, res: Response) => {
     if (action === "reject") newStatus = "registered"; // หรือ "slip_uploaded" ถ้าต้องการให้ re-upload
 
     reg.status = newStatus as any;
-    if (note) {
-      // เก็บโน้ตไว้ใน field note เดิม (หรือเพิ่มฟิลด์ใหม่ใน schema ก็ได้)
-      reg.note = note;
-    }
 
     await reg.save();
     console.log("[verifySlip] updated ->", reg._id, "status:", reg.status);

@@ -6,6 +6,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  role: "admin" | "user";
   // Add other user properties as needed
 }
 
