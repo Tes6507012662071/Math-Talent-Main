@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Registration from "../models/Registration";
+import IndividualRegistration from "../models/IndividualRegistration";
 
 
 interface CustomRequest extends Request {
@@ -55,5 +56,22 @@ export const uploadSlip = async (req: CustomRequest, res: Response) => {
   } catch (err) {
     console.error("❌ uploadSlip error:", err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดในเซิร์ฟเวอร์" });
+  }
+};
+
+// ✅ ดึงผู้สมัครทั้งหมดตาม Event
+export const getApplicantsByEvent = async (req: Request, res: Response) => {
+  try {
+    const { eventId } = req.params;
+
+    // หา registration ทั้งหมดที่สมัคร eventId นี้
+    const applicants = await IndividualRegistration.find({ eventId })
+      .populate("userId", "fullname userCode email") // ดึงข้อมูล user ที่เกี่ยวข้อง
+      .populate("eventId", "title");                 // ดึงชื่อ event
+
+    res.json(applicants);
+  } catch (error) {
+    console.error("❌ getApplicantsByEvent error:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลผู้สมัคร" });
   }
 };

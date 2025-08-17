@@ -2,12 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import axios from "axios";
+
+interface Applicant {
+  _id: string;
+  userCode: string;
+  fullname: string;
+  email: string;
+  status: string;
+  slipUrl?: string;
+}
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("uploadPDF");
 
-  // --- existing states & mock data (keep as-is) ---
   const [selectedEvent, setSelectedEvent] = useState("");
   const [solutionFile, setSolutionFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState("");
@@ -15,124 +24,148 @@ const AdminDashboard: React.FC = () => {
   const [excelUploadStatus, setExcelUploadStatus] = useState("");
 
   const [events, setEvents] = useState<any[]>([]);
-  const [applicants, setApplicants] = useState<any[]>([]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [eventName, setEventName] = useState("");
 
-  // Fetch events on load
+  // --- Fetch events ---
   useEffect(() => {
     const fetchEvents = async () => {
-      const res = await fetch("http://localhost:5000/api/events"); // adjust to your event.routes
-      const data = await res.json();
-      setEvents(data);
+      try {
+        console.log("📌 Fetching events...");
+        const res = await axios.get("http://localhost:5000/api/events", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        console.log("📌 Events fetched:", res.data);
+        setEvents(res.data);
+      } catch (err) {
+        console.error("❌ Fetch events error:", err);
+      }
     };
     fetchEvents();
   }, []);
 
-  // Fetch slips when event selected
+  // --- Fetch applicants when event selected ---
   useEffect(() => {
     if (!selectedEvent) return;
-    const fetchSlips = async () => {
-      const res = await fetch(`http://localhost:5000/api/slips/event/${selectedEvent}`);
-      const data = await res.json();
-      setApplicants(data);
+
+    const fetchApplicants = async () => {
+      try {
+        console.log("📌 Selected event ID:", selectedEvent);
+
+        const res = await axios.get(
+          `http://localhost:5000/api/individual-registration/event/${selectedEvent}`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        );
+
+        console.log("📌 API response for applicants:", res.data);
+
+        if (!res.data) console.warn("⚠️ Response data is empty");
+        if (!res.data.applicants) console.warn("⚠️ Applicants field missing in response");
+
+        setApplicants(res.data.applicants || []);
+        setEventName(res.data.eventName || "");
+        console.log("📌 Applicants state updated:", res.data.applicants);
+      } catch (err) {
+        console.error("❌ Fetch applicants error:", err);
+      }
     };
-    fetchSlips();
+
+    fetchApplicants();
   }, [selectedEvent]);
 
-  // Update slip status
+  // --- Update applicant status ---
   const handleUpdateStatusToExamReady = async (id: string) => {
-    await fetch(`http://localhost:5000/api/slips/${id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "exam_ready" }),
-    });
-    // refresh list
-    setApplicants((prev) =>
-      prev.map((a) => (a._id === id ? { ...a, status: "exam_ready" } : a))
-    );
+    try {
+      console.log("📌 Updating status for registration ID:", id);
+
+      const res = await axios.patch(
+        `http://localhost:5000/api/individual-registration/${id}/status`,
+        { status: "examReady" },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+
+      console.log("📌 Status update response:", res.data);
+
+      const updated = res.data.registration;
+      setApplicants((prev) =>
+        prev.map((a) => (a._id === id ? updated : a))
+      );
+      console.log("📌 Applicants after update:", applicants);
+    } catch (err) {
+      console.error("❌ Update status error:", err);
+    }
   };
 
-  const certificateUsers = [
-    { id: "1", fullname: "สมชาย ใจดี", event: "คณิตศาสตร์ ม.ต้น", certUrl: "http://example.com/cert1.pdf" },
-    { id: "3", fullname: "สมปอง แข็งแรง", event: "คณิตศาสตร์ ม.ปลาย", certUrl: null },
-  ];
-
-  // --- handlers (same as before, shortened here) ---
+  // --- Handlers for uploads ---
   const handleSolutionFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setSolutionFile(e.target.files[0]);
   };
+
   const handleSolutionUpload = async () => {
-    if (!selectedEvent) {
-      alert("กรุณาเลือกกิจกรรม");
-      return;
-    }
-    if (!solutionFile) {
-      alert("กรุณาเลือกไฟล์ PDF");
-      return;
-    }
+    if (!selectedEvent) return alert("กรุณาเลือกกิจกรรม");
+    if (!solutionFile) return alert("กรุณาเลือกไฟล์ PDF");
 
     setUploadStatus("กำลังอัปโหลด...");
-
     try {
       const formData = new FormData();
       formData.append("eventId", selectedEvent);
       formData.append("file", solutionFile);
 
-      const response = await fetch("http://localhost:5000/api/solutions/upload", {
-        method: "POST",
-        body: formData,
-      });
+      console.log("📌 Uploading solution PDF with FormData:", formData);
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
+      await axios.post(
+        "http://localhost:5000/api/solutions/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-      const result = await response.json();
-      console.log("Uploaded:", result);
-
-      // Example: API returns { success: true, fileUrl: "http://..." }
       setUploadStatus("อัปโหลดสำเร็จ ✅");
-    } catch (error) {
-      console.error("Upload error:", error);
+      console.log("📌 Solution PDF uploaded successfully");
+    } catch (err) {
+      console.error("❌ Solution upload error:", err);
       setUploadStatus("อัปโหลดล้มเหลว ❌");
     }
   };
+
   const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setExcelFile(e.target.files[0]);
   };
+
   const handleExcelUpload = () => {
     if (!excelFile) return alert("กรุณาเลือกไฟล์");
     setExcelUploadStatus("กำลังอัปโหลด...");
-    setTimeout(() => setExcelUploadStatus("อัปโหลดสำเร็จ"), 1500);
+    setTimeout(() => {
+      setExcelUploadStatus("อัปโหลดสำเร็จ");
+      console.log("📌 Excel uploaded (mock)");
+    }, 1500);
   };
-  // Removed duplicate handleUpdateStatusToExamReady to fix redeclaration error
+
   const handleCertFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) alert("อัปโหลดใบประกาศเกียรติคุณ (mock)");
+    if (e.target.files) console.log("📌 Certificate file selected (mock)", e.target.files[0]);
   };
 
-  // --- auth check ---
+  // --- Auth check ---
   useEffect(() => {
-  const checkAuth = async () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const user = JSON.parse(storedUser);
-      if (user.role !== "admin") {
-        navigate("/landing");
+    const checkAuth = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return navigate("/login");
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.role !== "admin") navigate("/landing");
+      } catch {
+        localStorage.removeItem("user");
+        navigate("/login");
       }
-    } catch (err) {
-      localStorage.removeItem("user");
-      navigate("/login");
-    }
-  };
+    };
+    checkAuth();
+  }, [navigate]);
 
-  checkAuth();
-}, [navigate]);
-
-  // --- render content for right side ---
+  // --- Render content ---
   const renderContent = () => {
     switch (selectedTopic) {
       case "uploadPDF":
@@ -145,8 +178,11 @@ const AdminDashboard: React.FC = () => {
               onChange={(e) => setSelectedEvent(e.target.value)}
             >
               <option value="">-- เลือกกิจกรรม --</option>
-              <option value="event1">คณิตศาสตร์ ม.ต้น</option>
-              <option value="event2">คณิตศาสตร์ ม.ปลาย</option>
+              {events.map((ev) => (
+                <option key={ev._id} value={ev._id}>
+                  {ev.title}
+                </option>
+              ))}
             </select>
             <input type="file" accept="application/pdf" onChange={handleSolutionFileChange} />
             <button
@@ -158,34 +194,36 @@ const AdminDashboard: React.FC = () => {
             {uploadStatus && <p className="mt-2">{uploadStatus}</p>}
           </section>
         );
-        case "checkSlip":
-          return (
-            <section>
-              <h2 className="font-semibold mb-3">2. ตรวจสอบสลิปผู้สมัคร</h2>
 
-              {/* Select Event */}
-              <div className="mb-4">
-                <label className="mr-2 font-medium">เลือกกิจกรรม:</label>
-                <select
-                  className="border p-2 rounded"
-                  value={selectedEvent}
-                  onChange={(e) => setSelectedEvent(e.target.value)}
-                >
-                  <option value="">-- เลือกกิจกรรม --</option>
-                  {events.map((ev) => (
-                    <option key={ev._id} value={ev._id}>
-                      {ev.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      case "checkSlip":
+        return (
+          <section>
+            <h2 className="font-semibold mb-3">2. ตรวจสอบสลิปผู้สมัคร</h2>
+            <div className="mb-4">
+              <label className="mr-2 font-medium">เลือกกิจกรรม:</label>
+              <select
+                className="border p-2 rounded"
+                value={selectedEvent}
+                onChange={(e) => setSelectedEvent(e.target.value)}
+              >
+                <option value="">-- เลือกกิจกรรม --</option>
+                {events.map((ev) => (
+                  <option key={ev._id} value={ev._id}>
+                    {ev.title}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {/* Show candidates */}
-              {selectedEvent && applicants.length > 0 ? (
+            {selectedEvent && applicants.length > 0 ? (
+              <>
+                <p className="font-medium mb-2">Event: {eventName}</p>
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-200">
+                      <th className="border p-2">รหัสผู้สมัคร</th>
                       <th className="border p-2">ชื่อ-นามสกุล</th>
+                      <th className="border p-2">อีเมล</th>
                       <th className="border p-2">สถานะ</th>
                       <th className="border p-2">สลิป</th>
                       <th className="border p-2">อัปเดตสถานะ</th>
@@ -194,16 +232,20 @@ const AdminDashboard: React.FC = () => {
                   <tbody>
                     {applicants.map((app) => (
                       <tr key={app._id} className="hover:bg-gray-100">
-                        <td className="border p-2">{app.fullname}</td>
+                        <td className="border p-2">{app.userCode || "-"}</td>
+                        <td className="border p-2">{app.fullname || "-"}</td>
+                        <td className="border p-2">{app.email || "-"}</td>
                         <td className="border p-2">{app.status}</td>
                         <td className="border p-2">
                           {app.slipUrl ? (
-                            <a href={app.slipUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-                              ดูสลิป
-                            </a>
-                          ) : (
-                            "-"
-                          )}
+                            app.slipUrl.endsWith(".pdf") ? (
+                              <a href={app.slipUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                                ดูสลิป (PDF)
+                              </a>
+                            ) : (
+                              <img src={app.slipUrl} alt="Slip" className="w-32 h-auto border" />
+                            )
+                          ) : "-"}
                         </td>
                         <td className="border p-2">
                           <button
@@ -217,11 +259,13 @@ const AdminDashboard: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
-              ) : (
-                selectedEvent && <p className="text-gray-500">ไม่พบผู้สมัครในกิจกรรมนี้</p>
-              )}
-            </section>
-          );
+              </>
+            ) : selectedEvent ? (
+              <p className="text-gray-500">ไม่พบผู้สมัครในกิจกรรมนี้</p>
+            ) : null}
+          </section>
+        );
+
       case "uploadExcel":
         return (
           <section>
@@ -236,37 +280,15 @@ const AdminDashboard: React.FC = () => {
             {excelUploadStatus && <p className="mt-2">{excelUploadStatus}</p>}
           </section>
         );
+
       case "certificate":
         return (
           <section>
             <h2 className="font-semibold mb-3">4. ใบประกาศเกียรติคุณ (Certificate)</h2>
             <input type="file" accept="application/pdf" onChange={handleCertFileUpload} />
-            <table className="w-full border-collapse border border-gray-300 mt-4">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">ชื่อ-นามสกุล</th>
-                  <th className="border p-2">กิจกรรม</th>
-                  <th className="border p-2">ดาวน์โหลดใบ cert</th>
-                </tr>
-              </thead>
-              <tbody>
-                {certificateUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-100">
-                    <td className="border p-2">{u.fullname}</td>
-                    <td className="border p-2">{u.event}</td>
-                    <td className="border p-2">
-                      {u.certUrl ? (
-                        <a href={u.certUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-                          ดาวน์โหลด
-                        </a>
-                      ) : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </section>
         );
+
       default:
         return null;
     }
@@ -276,13 +298,14 @@ const AdminDashboard: React.FC = () => {
     <>
       <Navbar />
       <div className="p-6 flex space-x-6 max-w-6xl mx-auto">
-        {/* Left menu */}
         <aside className="w-64 border-r pr-4">
           <h2 className="text-lg font-bold mb-4">Menu</h2>
           <ul className="space-y-2">
             <li>
               <button
-                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "uploadPDF" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                className={`w-full text-left px-3 py-2 rounded ${
+                  selectedTopic === "uploadPDF" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"
+                }`}
                 onClick={() => setSelectedTopic("uploadPDF")}
               >
                 1. Upload Solution PDF
@@ -290,7 +313,9 @@ const AdminDashboard: React.FC = () => {
             </li>
             <li>
               <button
-                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "checkSlip" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                className={`w-full text-left px-3 py-2 rounded ${
+                  selectedTopic === "checkSlip" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"
+                }`}
                 onClick={() => setSelectedTopic("checkSlip")}
               >
                 2. ตรวจสอบสลิปผู้สมัคร
@@ -298,7 +323,9 @@ const AdminDashboard: React.FC = () => {
             </li>
             <li>
               <button
-                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "uploadExcel" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                className={`w-full text-left px-3 py-2 rounded ${
+                  selectedTopic === "uploadExcel" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"
+                }`}
                 onClick={() => setSelectedTopic("uploadExcel")}
               >
                 3. Upload Excel
@@ -306,7 +333,9 @@ const AdminDashboard: React.FC = () => {
             </li>
             <li>
               <button
-                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "certificate" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                className={`w-full text-left px-3 py-2 rounded ${
+                  selectedTopic === "certificate" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"
+                }`}
                 onClick={() => setSelectedTopic("certificate")}
               >
                 4. ใบประกาศเกียรติคุณ
@@ -314,8 +343,6 @@ const AdminDashboard: React.FC = () => {
             </li>
           </ul>
         </aside>
-
-        {/* Right content */}
         <main className="flex-1">{renderContent()}</main>
       </div>
       <Footer />

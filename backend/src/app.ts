@@ -20,4 +20,5 @@ app.use("/images", express.static("public/images"));
 app.use("/api/admin", adminRoutes);
 app.use("/api/solutions", solutionRoutes);
 app.use("/api/slips", slipRoutes);
+app.use("/uploads/slips", express.static("uploads/slips"));
 export default app;

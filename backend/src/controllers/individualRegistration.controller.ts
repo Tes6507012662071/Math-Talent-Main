@@ -1,11 +1,27 @@
 // src/controllers/individualRegistration.controller.ts
+import path from "path";
 import { Request, Response } from "express";
 import IndividualRegistration from "../models/IndividualRegistration";
 import Event from "../models/Event";
+import fs from "fs";
+import multer from "multer";
 
 interface CustomRequest extends Request {
   user?: { id: string };
 }
+
+const uploadFolder = path.join(__dirname, "../../uploads/slips");
+if (!fs.existsSync(uploadFolder)) fs.mkdirSync(uploadFolder, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadFolder),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname)); // ใส่นามสกุลไฟล์เดิม
+  },
+});
+
+export const uploadSlipMiddleware = multer({ storage });
 
 // REGISTER INDIVIDUAL
 export const registerIndividual = async (req: Request, res: Response) => {
@@ -114,13 +130,19 @@ export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res
   try {
     const registrationId = req.params.id;
     const userId = req.user?.id;
-    const slipPath = req.file?.path;
 
-    if (!slipPath) return res.status(400).json({ message: "❌ ไม่พบไฟล์ slip" });
+    if (!req.file) {
+      return res.status(400).json({ message: "❌ ไม่พบไฟล์ slip" });
+    }
+    const slipUrl = `${req.protocol}://${req.get("host")}/uploads/slips/${req.file.filename}`;
+
+    console.log("📥 Uploaded file:", req.file);
+    console.log("🌐 Slip URL saved:", slipUrl);
+
 
     const registration = await IndividualRegistration.findOneAndUpdate(
       { _id: registrationId, userId },
-      { slipUrl: slipPath, status: "slip_uploaded" },
+      { slipUrl, status: "slip_uploaded" },
       { new: true }
     ).populate("eventId");
 
@@ -133,5 +155,46 @@ export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res
   } catch (err) {
     console.error("❌ uploadSlip error:", err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดในเซิร์ฟเวอร์" });
+  }
+};
+
+// 🟢 ดึงรายชื่อผู้สมัครตาม event (ปรับ fields ให้ตรงตามที่ต้องการ)
+export const getApplicantsByEvent = async (req: Request, res: Response) => {
+  try {
+    const { eventId } = req.params;
+
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ message: "ไม่พบกิจกรรม" });
+
+    // ดึงเฉพาะฟิลด์ที่ต้องการ
+    const applicants = await IndividualRegistration.find({ eventId }).select(
+      "userCode fullname email status -_id"
+    ).sort({ createdAt: 1 });
+
+    res.json({ eventName: event.title, applicants });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// อัปเดตสถานะผู้สมัคร
+export const updateApplicantStatus = async (req: Request, res: Response) => {
+  try {
+    const { registrationId } = req.params;
+    const { status } = req.body;
+
+    const updated = await IndividualRegistration.findByIdAndUpdate(
+      registrationId,
+      { status },
+      { new: true }
+    ).populate("userId", "fullname email");
+
+    if (!updated) return res.status(404).json({ message: "ไม่พบผู้สมัคร" });
+
+    res.json({ success: true, registration: updated });
+  } catch (error) {
+    console.error("❌ updateApplicantStatus error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
