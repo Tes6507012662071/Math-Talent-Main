@@ -130,11 +130,12 @@ export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res
   try {
     const registrationId = req.params.id;
     const userId = req.user?.id;
+    const file = req.file;
 
-    if (!req.file) {
+    if (!file) {
       return res.status(400).json({ message: "❌ ไม่พบไฟล์ slip" });
     }
-    const slipUrl = `${req.protocol}://${req.get("host")}/uploads/slips/${req.file.filename}`;
+    const slipUrl = `${req.protocol}://${req.get("host")}/uploads/slips/${file.filename}`;
 
     console.log("📥 Uploaded file:", req.file);
     console.log("🌐 Slip URL saved:", slipUrl);
@@ -167,11 +168,19 @@ export const getApplicantsByEvent = async (req: Request, res: Response) => {
     if (!event) return res.status(404).json({ message: "ไม่พบกิจกรรม" });
 
     // ดึงเฉพาะฟิลด์ที่ต้องการ
-    const applicants = await IndividualRegistration.find({ eventId }).select(
-      "userCode fullname email status -_id"
-    ).sort({ createdAt: 1 });
+    const applicants = await IndividualRegistration.find({ eventId }).sort({ createdAt: 1 });
 
-    res.json({ eventName: event.title, applicants });
+    const result = applicants.map(a => ({
+      _id: a._id,
+      userCode: a.userCode,
+      fullname: a.fullname,
+      email: a.email,
+      status: a.status,
+      slipUrl: a.slipUrl, // URL ที่ต่อ extension แล้ว
+    }));
+
+    console.log("Sending applicants:", result);
+    res.json({ eventName: event.title, applicants: result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

@@ -239,11 +239,13 @@ const AdminDashboard: React.FC = () => {
                         <td className="border p-2">
                           {app.slipUrl ? (
                             app.slipUrl.endsWith(".pdf") ? (
-                              <a href={app.slipUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                              <a href={app.slipUrl} target="_blank" rel="noreferrer">
                                 ดูสลิป (PDF)
                               </a>
                             ) : (
-                              <img src={app.slipUrl} alt="Slip" className="w-32 h-auto border" />
+                              <a href={app.slipUrl} target="_blank" rel="noreferrer">
+                                <img src={app.slipUrl} alt="Slip" className="w-32 h-auto border" />
+                              </a>
                             )
                           ) : "-"}
                         </td>
