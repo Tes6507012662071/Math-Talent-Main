@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, TrendingUp, CheckCircle } from 'lucide-react';
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
@@ -41,6 +42,13 @@ interface EventStatus {
   note?: string;
 }
 
+interface Registration {
+  eventId: string;
+  eventName: string;
+  userCode: string;
+  status: string;
+}
+
 const Profile: React.FC = () => {
   // API-related state
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -54,6 +62,8 @@ const Profile: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [downloadProgress, setDownloadProgress] = useState<{ [key: string]: number }>({});
 
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -118,6 +128,27 @@ const Profile: React.FC = () => {
         }
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  // --- Fetch user registrations ---
+  useEffect(() => {
+    const fetchRegistrations = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/individual-registration/my-events", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("📌 User registrations:", res.data);
+        setRegistrations(res.data.registrations || []);
+      } catch (error) {
+        console.error("❌ Fetch registrations error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRegistrations();
   }, []);
 
   // Update editedProfile when userProfile changes
@@ -192,20 +223,43 @@ const Profile: React.FC = () => {
     });
   };
 
-  const handleDownloadCertificate = (eventTitle: string) => {
-    const element = document.createElement('a');
-    const file = new Blob(
-      [
-        `Certificate of Completion\n\nThis certifies that ${userProfile.name} has successfully completed ${eventTitle}\n\nDate: ${new Date().toLocaleDateString()}`
-      ],
-      { type: 'text/plain' }
-    );
-    element.href = URL.createObjectURL(file);
-    element.download = `${eventTitle}_Certificate.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleDownloadCertificate = async (eventId: string, userCode: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      setDownloadProgress((prev) => ({ ...prev, [userCode]: 0 }));
+
+      const res = await axios.get(
+        `http://localhost:5000/api/certificates/download/${eventId}/${userCode}`,
+        {
+          responseType: "blob",
+          headers: { Authorization: `Bearer ${token}` },
+          onDownloadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setDownloadProgress((prev) => ({ ...prev, [userCode]: percent }));
+            }
+          },
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${userCode}_Certificate.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setDownloadProgress((prev) => ({ ...prev, [userCode]: 100 }));
+    } catch (error: any) {
+      console.error("❌ Download certificate error:", error);
+      alert(error.response?.data?.message || "เกิดข้อผิดพลาดในการดาวน์โหลด");
+      setDownloadProgress((prev) => ({ ...prev, [userCode]: 0 }));
+    }
   };
+
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -636,9 +690,7 @@ const renderActivityTab = () => {
                   {/* ✅ ปุ่ม Download Certificate เฉพาะ status completed */}
                   {e.status === "completed" && (
                     <button
-                      onClick={() =>
-                        handleDownloadCertificate(getEventTitle(e.event))
-                      }
+                      onClick={() => handleDownloadCertificate(e.event._id, e.userCode)}
                       className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
                     >
                       <Download size={16} />
@@ -660,42 +712,49 @@ const renderActivityTab = () => {
 };
 
   // Certificate Tab
-  const renderCertificateTab = () => (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Certificates</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {events.filter(event => event.status === 'completed').map((event) => (
-          <div key={event._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-3 mb-4">
-              <Award className="h-8 w-8 text-yellow-500" />
-              <div>
-                <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
-                <p className="text-sm text-gray-600">Completed on {getEventDate(event.event?.date)}</p>
-                {event.event.location && (
-                  <p className="text-xs text-gray-500">{event.event.location}</p>
-                )}
+  const renderCertificateTab = () => {
+    // If you want to use completedEvents, you can define it here if needed
+    // const completedEvents = events.filter(event => event.status === "completed");
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Certificates</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {events.filter(event => event.status === 'completed').map((event) => (
+            <div key={event._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-3 mb-4">
+                <Award className="h-8 w-8 text-yellow-500" />
+                <div>
+                  <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
+                  <p className="text-sm text-gray-600">Completed on {getEventDate(event.event?.date)}</p>
+                  {event.event.location && (
+                    <p className="text-xs text-gray-500">{event.event.location}</p>
+                  )}
+                </div>
               </div>
+
+              {/* ✅ ใช้ userCode จาก event registration แทน user.userCode */}
+              <button
+                onClick={() => handleDownloadCertificate(event.event._id, event.userCode)}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Download size={16} />
+                Download Certificate
+              </button>
             </div>
-            <button
-              onClick={() => handleDownloadCertificate(getEventTitle(event.event))}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Download size={16} />
-              Download Certificate
-            </button>
-          </div>
-        ))}
-      </div>
-      
-      {events.filter(event => event.status === 'completed').length === 0 && (
-        <div className="text-center py-12">
-          <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No certificates available yet.</p>
+          ))}
         </div>
-      )}
-    </div>
-  );
+        
+        {events.filter(event => event.status === 'completed').length === 0 && (
+          <div className="text-center py-12">
+            <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No certificates available yet.</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />

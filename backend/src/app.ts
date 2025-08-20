@@ -8,6 +8,8 @@ import adminRoutes from "./routes/admin.routes";
 import solutionRoutes from "./routes/solution.routes";
 import slipRoutes from "./routes/slip.routes";
 import path from "path";
+import attendanceRoutes from "./routes/attendance.routes";
+import certificateRoutes from "./routes/certificate.route";
 
 const app = express();
 app.use(cors());
@@ -22,5 +24,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/solutions", solutionRoutes);
 app.use("/api/slips", slipRoutes);
 app.use("/uploads/slips", express.static(path.join(__dirname, "../uploads/slips")));
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/certificates", certificateRoutes);
 
 export default app;
