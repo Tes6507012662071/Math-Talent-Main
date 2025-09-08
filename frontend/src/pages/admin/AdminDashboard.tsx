@@ -41,6 +41,7 @@ const AdminDashboard: React.FC = () => {
   const [certificateUploadStatus, setCertificateUploadStatus] = useState("");
   const [certificates, setCertificates] = useState<any[]>([]);
   const [loadingCertificates, setLoadingCertificates] = useState(false);
+  
 
 
   // --- Fetch events ---
@@ -265,7 +266,7 @@ const AdminDashboard: React.FC = () => {
               value={selectedEventUploadPDF}
               onChange={(e) => setSelectedEventUploadPDF(e.target.value)}
             >
-              <option value="">-- เลือกกิจกรรม --</option>
+              <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.title}
@@ -286,13 +287,13 @@ const AdminDashboard: React.FC = () => {
       case "checkSlip":
         return (
           <section>
-            <h2 className="font-semibold mb-3">2. ตรวจสอบสลิปผู้สมัคร</h2>
+            <h2 className="font-semibold mb-3">2. Check Applicant Slip</h2>
             <select
               className="border p-2 rounded mb-4"
               value={selectedEventCheckSlip}
               onChange={(e) => setSelectedEventCheckSlip(e.target.value)}
             >
-              <option value="">-- เลือกกิจกรรม --</option>
+              <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.title}
@@ -403,7 +404,7 @@ const AdminDashboard: React.FC = () => {
               value={selectedEventUploadExcel}
               onChange={(e) => setSelectedEventUploadExcel(e.target.value)}
             >
-              <option value="">-- เลือกกิจกรรม --</option>
+              <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.title}
@@ -424,11 +425,11 @@ const AdminDashboard: React.FC = () => {
       case "certificate":
         return (
           <section>
-            <h2 className="font-semibold mb-3">4. ใบประกาศเกียรติคุณ (Certificate)</h2>
+            <h2 className="font-semibold mb-3">4. Certificate (Certificate)</h2>
 
             {/* เลือก Event */}
             <div className="mb-4">
-              <label className="mr-2 font-medium">เลือกกิจกรรม:</label>
+              <label className="mr-2 font-medium">Select Event:</label>
               <select
                 className="border p-2 rounded"
                 value={selectedEventCertificate}
@@ -437,7 +438,7 @@ const AdminDashboard: React.FC = () => {
                   fetchCertificates(e.target.value);
                 }}
               >
-                <option value="">-- เลือกกิจกรรม --</option>
+                <option value="">-- Select Event --</option>
                 {events.map((ev) => (
                   <option key={ev._id} value={ev._id}>
                     {ev.title}
@@ -518,7 +519,7 @@ const AdminDashboard: React.FC = () => {
                           rel="noopener noreferrer"
                           className="text-blue-600 underline hover:text-blue-800"
                         >
-                          ดาวน์โหลด
+                          Download
                         </a>
                       </li>
                     ))}
@@ -554,7 +555,7 @@ const AdminDashboard: React.FC = () => {
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "checkSlip" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("checkSlip")}
               >
-                2. ตรวจสอบสลิปผู้สมัคร
+                2. Check Applicant Slip
               </button>
             </li>
             <li>
@@ -570,7 +571,7 @@ const AdminDashboard: React.FC = () => {
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "certificate" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("certificate")}
               >
-                4. ใบประกาศเกียรติคุณ
+                4. Certificate
               </button>
             </li>
           </ul>
