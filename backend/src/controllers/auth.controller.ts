@@ -1,15 +1,9 @@
-
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 
-//กำหนด CustomRequest สำหรับ req.user
-interface CustomRequest extends Request {
-  user?: {
-    id: string;
-  };
-}
+// ✅ ลบ CustomRequest ออกทั้งหมด — ใช้ global type จาก src/types/express/index.d.ts
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -21,7 +15,6 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-
     const user = await User.create({ name, email, password: hashed });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
@@ -30,7 +23,8 @@ export const register = async (req: Request, res: Response) => {
 
     res.status(201).json({ token });
   } catch (err) {
-    res.status(500).json({ message: "Register failed", error: err });
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Register failed" });
   }
 };
 
@@ -74,15 +68,22 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrentUser = async (req: CustomRequest, res: Response) => {
-
+export const getCurrentUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?.id).select("-password");
+    // ✅ ตรวจสอบ req.user จาก global type
+    if (!req.user) {
+      return res.status(401).json({ message: "ไม่ได้รับสิทธิ์" });
+    }
 
-    res.statusMessage = `Current user fetched successfully, ID ${req}`;
+    const user = await User.findById(req.user.id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+    }
 
     res.status(200).json(user);
   } catch (err) {
-    res.status(500).json({ message: "Cannot fetch user", error: err });
+    console.error("getCurrentUser error:", err);
+    res.status(500).json({ message: "Cannot fetch user" });
   }
 };

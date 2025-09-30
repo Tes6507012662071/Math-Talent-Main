@@ -1,4 +1,3 @@
-// src/controllers/individualRegistration.controller.ts
 import path from "path";
 import { Request, Response } from "express";
 import IndividualRegistration from "../models/IndividualRegistration";
@@ -6,9 +5,7 @@ import Event from "../models/Event";
 import fs from "fs";
 import multer from "multer";
 
-interface CustomRequest extends Request {
-  user?: { id: string };
-}
+// ✅ ลบ CustomRequest ออกทั้งหมด — ใช้ global type
 
 const uploadFolder = path.join(__dirname, "../../uploads/slips");
 if (!fs.existsSync(uploadFolder)) fs.mkdirSync(uploadFolder, { recursive: true });
@@ -17,7 +14,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadFolder),
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname)); // ใส่นามสกุลไฟล์เดิม
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
@@ -26,8 +23,7 @@ export const uploadSlipMiddleware = multer({ storage });
 // REGISTER INDIVIDUAL
 export const registerIndividual = async (req: Request, res: Response) => {
   try {
-    const customReq = req as CustomRequest;
-    const userId = customReq.user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const { eventId, fullname, grade, school, phone, email } = req.body;
@@ -78,7 +74,7 @@ export const registerIndividual = async (req: Request, res: Response) => {
 };
 
 // GET MY REGISTRATIONS
-export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
+export const getMyRegistrations = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
@@ -89,7 +85,7 @@ export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
 
     const transformedData = registrations
       .map((reg: any) => {
-        if (!reg.eventId) return null; // skip null events
+        if (!reg.eventId) return null;
         return {
           _id: reg._id,
           event: {
@@ -126,7 +122,7 @@ export const getMyRegistrations = async (req: CustomRequest, res: Response) => {
 };
 
 // UPLOAD SLIP
-export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res: Response) => {
+export const uploadSlipToIndividualRegistration = async (req: Request, res: Response) => {
   try {
     const registrationId = req.params.id;
     const userId = req.user?.id;
@@ -139,8 +135,7 @@ export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res
 
     console.log("📥 Uploaded file:", req.file);
     console.log("🌐 Slip URL saved:", slipUrl);
-
-
+    
     const registration = await IndividualRegistration.findOneAndUpdate(
       { _id: registrationId, userId },
       { slipUrl, status: "slip_uploaded" },
@@ -159,7 +154,7 @@ export const uploadSlipToIndividualRegistration = async (req: CustomRequest, res
   }
 };
 
-// 🟢 ดึงรายชื่อผู้สมัครตาม event (ปรับ fields ให้ตรงตามที่ต้องการ)
+// 🟢 ดึงรายชื่อผู้สมัครตาม event
 export const getApplicantsByEvent = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
@@ -167,7 +162,6 @@ export const getApplicantsByEvent = async (req: Request, res: Response) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: "ไม่พบกิจกรรม" });
 
-    // ดึงเฉพาะฟิลด์ที่ต้องการ
     const applicants = await IndividualRegistration.find({ eventId }).sort({ createdAt: 1 });
 
     const result = applicants.map(a => ({
@@ -176,11 +170,11 @@ export const getApplicantsByEvent = async (req: Request, res: Response) => {
       fullname: a.fullname,
       email: a.email,
       status: a.status,
-      slipUrl: a.slipUrl, // URL ที่ต่อ extension แล้ว
+      slipUrl: a.slipUrl,
     }));
 
     console.log("Sending applicants:", result);
-    res.json({ eventName: event.title, applicants: result });
+    res.json({ eventName: event.nameEvent, applicants: result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

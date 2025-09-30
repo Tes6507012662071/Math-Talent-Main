@@ -1,30 +1,9 @@
-// import app from "./app";
-// import mongoose from "mongoose";
-// import dotenv from "dotenv";
-// import registrationRoutes from "./routes/registration";
-// import express from "express";
-
-// dotenv.config();
-
-// app.use("/uploads", express.static("uploads"));
-// app.use("/api/registration", registrationRoutes);
-
-// mongoose.connect(process.env.MONGO_URI!)
-//   .then(() => {
-//     app.listen(process.env.PORT, () =>
-//       console.log(`🚀 Server running at http://localhost:${process.env.PORT}`)
-//     );
-//   })
-//   .catch((err) => console.error("MongoDB connection failed:", err));
-
-
 // backend/server.ts
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import app from "./src/app";
-import seedEvents from "./seedEvents"; // ✅ เพิ่มตรงนี้
 
-// โหลด ENV config
+// Load ENV config
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -32,14 +11,16 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/math-talen
 
 mongoose
   .connect(MONGO_URI)
-  .then(async() => {
+  .then(async () => {
     console.log("✅ MongoDB connected");
-    // ✅ รัน seed หลังเชื่อมต่อ Mongo สำเร็จ
-    await seedEvents();
+    
+    // ✅ Actually start the server!
     app.listen(PORT, () => {
       console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log(`📡 API available at http://localhost:${PORT}/api`);
     });
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
   });

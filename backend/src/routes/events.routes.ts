@@ -1,10 +1,13 @@
-// backend/routes/events.routes.ts
+// backend/src/routes/events.routes.ts
 import express from "express";
-import { getAllEvents, getEventById } from "../controllers/event.controller";
+import { getAllEvents, getEventById, createEvent } from "../controllers/event.controller";
+import { protect, adminOnly } from "../middleware/authMiddleware";
+import { uploadEventImage } from "../middleware/uploadEventImage";
 
 const router = express.Router();
 
 router.get("/", getAllEvents);
-router.get("/:id", getEventById); // ✅ ตัวอย่าง endpoint: GET /api/events
+router.get("/:id", getEventById);
+router.post("/", protect, adminOnly, uploadEventImage.single('image'), createEvent);
 
 export default router;

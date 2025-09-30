@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { uploadSlip } from "../controllers/registration.controller";
-import authMiddleware from "../middleware/authMiddleware";
+import {protect} from "../middleware/authMiddleware";
 
 
 const router = express.Router();
@@ -19,6 +19,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ✅ อัปโหลด slip
-router.post("/upload-slip/:id", authMiddleware, upload.single("slip"), uploadSlip);
+router.post("/upload-slip/:id", protect, upload.single("slip"), uploadSlip);
 
 export default router;

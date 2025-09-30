@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import axios from "axios";
+import { fetchLandingContent, updateLandingContent, LandingData } from '../../api/landing';
 
 interface Applicant {
   _id: string;
@@ -41,8 +42,30 @@ const AdminDashboard: React.FC = () => {
   const [certificateUploadStatus, setCertificateUploadStatus] = useState("");
   const [certificates, setCertificates] = useState<any[]>([]);
   const [loadingCertificates, setLoadingCertificates] = useState(false);
-  
 
+  // --- Add Event State ---
+  const [addEventForm, setAddEventForm] = useState({
+    nameEvent: '',
+    detail: '',
+    dateAndTime: '',
+    location: '',
+    registrationType: 'individual' as 'individual' | 'school',
+    stations: [
+      { stationName: '', address: '', capacity: 0, code: 1 },
+    ],
+  });
+  const [eventImageFile, setEventImageFile] = useState<File | null>(null);
+  const [addEventStatus, setAddEventStatus] = useState('');
+
+  // --- Landing Edit State ---
+  const [landingData, setLandingData] = useState<LandingData>({
+    historyTitle: '',
+    historyContent: '',
+    objectiveTitle: '',
+    objectives: ['']
+  });
+  const [loadingLanding, setLoadingLanding] = useState(false);
+  const [savingLanding, setSavingLanding] = useState(false);
 
   // --- Fetch events ---
   useEffect(() => {
@@ -58,6 +81,26 @@ const AdminDashboard: React.FC = () => {
     };
     fetchEvents();
   }, []);
+
+  // --- Fetch landing content when needed ---
+  useEffect(() => {
+    if (selectedTopic !== "editLanding") return;
+    
+    const loadLanding = async () => {
+      try {
+        setLoadingLanding(true);
+        const data = await fetchLandingContent();
+        setLandingData(data);
+      } catch (err) {
+        console.error("โหลดข้อมูล Landing ไม่ได้:", err);
+        alert("โหลดข้อมูลไม่ได้");
+      } finally {
+        setLoadingLanding(false);
+      }
+    };
+    
+    loadLanding();
+  }, [selectedTopic]);
 
   // --- Fetch applicants for Check Slip ---
   useEffect(() => {
@@ -188,7 +231,7 @@ const AdminDashboard: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append("eventId", selectedEventCertificate); // ✅ ส่ง eventId
+    formData.append("eventId", selectedEventCertificate);
     selectedCertificateFiles.forEach((file) => {
       formData.append("files", file);
     });
@@ -221,6 +264,43 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // --- Landing Edit Handlers ---
+  const handleLandingChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setLandingData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleObjectiveChange = (index: number, value: string) => {
+    const newObjectives = [...landingData.objectives];
+    newObjectives[index] = value;
+    setLandingData(prev => ({ ...prev, objectives: newObjectives }));
+  };
+
+  const addObjective = () => {
+    setLandingData(prev => ({ ...prev, objectives: [...prev.objectives, ''] }));
+  };
+
+  const removeObjective = (index: number) => {
+    if (landingData.objectives.length <= 1) return;
+    const newObjectives = landingData.objectives.filter((_, i) => i !== index);
+    setLandingData(prev => ({ ...prev, objectives: newObjectives }));
+  };
+
+  const saveLandingContent = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      
+      setSavingLanding(true);
+      await updateLandingContent(landingData, token);
+      alert("✅ บันทึกข้อมูลสำเร็จ!");
+    } catch (err: any) {
+      console.error("บันทึกไม่สำเร็จ:", err);
+      alert(err.message || "บันทึกไม่สำเร็จ");
+    } finally {
+      setSavingLanding(false);
+    }
+  };
 
   // --- Auth check ---
   useEffect(() => {
@@ -239,21 +319,113 @@ const AdminDashboard: React.FC = () => {
   }, [navigate]);
 
   const fetchCertificates = async (eventId: string) => {
-  try {
-    setLoadingCertificates(true);
-    const res = await axios.get(
-      `http://localhost:5000/api/certificates/event/${eventId}`
-    );
-    setCertificates(res.data.data);
-  } catch (error) {
-    console.error("❌ Fetch certificates error:", error);
-    setCertificates([]);
-  } finally {
-    setLoadingCertificates(false);
-  }
-};
+    try {
+      setLoadingCertificates(true);
+      const res = await axios.get(
+        `http://localhost:5000/api/certificates/event/${eventId}`
+      );
+      setCertificates(res.data.data);
+    } catch (error) {
+      console.error("❌ Fetch certificates error:", error);
+      setCertificates([]);
+    } finally {
+      setLoadingCertificates(false);
+    }
+  };
 
+ // --- Add Event Handlers ---
+  const handleAddEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setAddEventForm(prev => ({ ...prev, [name]: value }));
+  };
 
+  const handleStationChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const newStations = [...addEventForm.stations];
+    newStations[index] = { 
+      ...newStations[index], 
+      [name]: name === 'capacity' ? Number(value) : value 
+    };
+    setAddEventForm(prev => ({ ...prev, stations: newStations }));
+  };
+
+  const addStation = () => {
+    setAddEventForm(prev => ({
+      ...prev,
+      stations: [
+        ...prev.stations,
+        {
+          stationName: '',
+          address: '',
+          capacity: 0,
+          code: prev.stations.length + 1,
+        },
+      ],
+    }));
+  };
+
+  const removeStation = (index: number) => {
+    const newStations = addEventForm.stations.filter((_, i) => i !== index);
+    setAddEventForm(prev => ({
+      ...prev,
+      stations: newStations.map((s, i) => ({ ...s, code: i + 1 })),
+    }));
+  };
+
+  const handleAddEventSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddEventStatus('กำลังสร้างเหตุการณ์...');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('ไม่พบ token');
+
+      const formData = new FormData();
+      formData.append('nameEvent', addEventForm.nameEvent);
+      if (addEventForm.detail) formData.append('detail', addEventForm.detail);
+      formData.append('dateAndTime', new Date(addEventForm.dateAndTime).toISOString());
+      if (addEventForm.location) formData.append('location', addEventForm.location);
+      formData.append('registrationType', addEventForm.registrationType);
+      formData.append('stations', JSON.stringify(addEventForm.stations));
+      if (eventImageFile) {
+        formData.append('image', eventImageFile);
+      }
+
+      const res = await axios.post(
+        'http://localhost:5000/api/events',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      // รีเซ็ตฟอร์ม
+      setAddEventForm({
+        nameEvent: '',
+        detail: '',
+        dateAndTime: '',
+        location: '',
+        registrationType: 'individual',
+        stations: [{ stationName: '', address: '', capacity: 0, code: 1 }],
+      });
+      setEventImageFile(null);
+      setAddEventStatus('✅ สร้างเหตุการณ์สำเร็จ!');
+
+      // อัปเดต events list
+      const eventsRes = await axios.get('http://localhost:5000/api/events', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEvents(eventsRes.data);
+
+      setTimeout(() => setAddEventStatus(''), 2000);
+    } catch (err: any) {
+      console.error('❌ Add event error:', err);
+      setAddEventStatus(`❌ สร้างล้มเหลว: ${err.response?.data?.message || 'ไม่ทราบสาเหตุ'}`);
+    }
+  };
   // --- Render content ---
   const renderContent = () => {
     switch (selectedTopic) {
@@ -530,6 +702,287 @@ const AdminDashboard: React.FC = () => {
           </section>
         );
 
+      case "editLanding":
+        return (
+          <section>
+            <h2 className="font-semibold mb-6 text-2xl">🖊️ แก้ไขหน้า Landing</h2>
+            
+            {loadingLanding ? (
+              <div className="text-xl text-gray-500">กำลังโหลดข้อมูล...</div>
+            ) : (
+              <div className="space-y-8">
+                {/* หัวข้อประวัติ */}
+                <div>
+                  <label className="block text-lg font-medium text-gray-700 mb-3">
+                    หัวข้อประวัติและความเป็นมา
+                  </label>
+                  <input
+                    type="text"
+                    name="historyTitle"
+                    value={landingData.historyTitle}
+                    onChange={handleLandingChange}
+                    className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-3 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                {/* เนื้อหาประวัติ */}
+                <div>
+                  <label className="block text-lg font-medium text-gray-700 mb-3">
+                    เนื้อหาประวัติและความเป็นมา
+                  </label>
+                  <textarea
+                    name="historyContent"
+                    value={landingData.historyContent}
+                    onChange={handleLandingChange}
+                    rows={12}
+                    className="w-full p-4 text-base border border-gray-300 rounded-xl focus:ring-3 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                    required
+                  />
+                </div>
+
+                {/* หัวข้อวัตถุประสงค์ */}
+                <div>
+                  <label className="block text-lg font-medium text-gray-700 mb-3">
+                    หัวข้อวัตถุประสงค์
+                  </label>
+                  <input
+                    type="text"
+                    name="objectiveTitle"
+                    value={landingData.objectiveTitle}
+                    onChange={handleLandingChange}
+                    className="w-full p-4 text-lg border border-gray-300 rounded-xl focus:ring-3 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                {/* รายการวัตถุประสงค์ */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="block text-lg font-medium text-gray-700">
+                      รายการวัตถุประสงค์
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addObjective}
+                      className="text-lg bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium"
+                    >
+                      + เพิ่มรายการ
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {landingData.objectives.map((obj, index) => (
+                      <div key={index} className="flex gap-3 items-start">
+                        <input
+                          type="text"
+                          value={obj}
+                          onChange={e => handleObjectiveChange(index, e.target.value)}
+                          className="flex-1 p-4 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeObjective(index)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium disabled:opacity-50"
+                          disabled={landingData.objectives.length <= 1}
+                        >
+                          ลบ
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ปุ่มบันทึก */}
+                <div className="pt-4">
+                  <button
+                    onClick={saveLandingContent}
+                    disabled={savingLanding}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-xl font-bold disabled:opacity-50 transition"
+                  >
+                    {savingLanding ? 'กำลังบันทึก...' : '💾 บันทึกการเปลี่ยนแปลง'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+
+      case "addEvent":
+        return (
+          <section>
+            <h2 className="font-semibold mb-6 text-2xl">➕ เพิ่มเหตุการณ์ใหม่</h2>
+            
+            {addEventStatus && (
+              <div className={`mb-4 p-3 rounded ${addEventStatus.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {addEventStatus}
+              </div>
+            )}
+
+            <form onSubmit={handleAddEventSubmit} className="space-y-6">
+              <div>
+                <label className="block mb-2 font-medium">ชื่อเหตุการณ์ *</label>
+                <input
+                  type="text"
+                  name="nameEvent"
+                  value={addEventForm.nameEvent}
+                  onChange={handleAddEventChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">รายละเอียด</label>
+                <textarea
+                  name="detail"
+                  value={addEventForm.detail}
+                  onChange={handleAddEventChange}
+                  className="w-full p-2 border rounded"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">วันที่และเวลาสอบ *</label>
+                <input
+                  type="datetime-local"
+                  name="dateAndTime"
+                  value={addEventForm.dateAndTime}
+                  onChange={handleAddEventChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">สถานที่หลัก (จังหวัด/เขต)</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={addEventForm.location}
+                  onChange={handleAddEventChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">รูปภาพเหตุการณ์</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEventImageFile(e.target.files?.[0] || null)}
+                  className="w-full p-2 border rounded"
+                />
+                {eventImageFile && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    📎 {eventImageFile.name} ({(eventImageFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">ประเภทการสมัคร</label>
+                <select
+                  name="registrationType"
+                  value={addEventForm.registrationType}
+                  onChange={handleAddEventChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="individual">บุคคลทั่วไป</option>
+                  <option value="school">โรงเรียน</option>
+                </select>
+              </div>
+
+              {/* ศูนย์สอบ */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">📍 ศูนย์สอบ</h3>
+                  <button
+                    type="button"
+                    onClick={addStation}
+                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                  >
+                    + เพิ่มศูนย์สอบ
+                  </button>
+                </div>
+
+                {addEventForm.stations.map((station, index) => (
+                  <div key={index} className="border p-4 mb-4 rounded bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-medium">ศูนย์สอบ {index + 1}</span>
+                      {addEventForm.stations.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeStation(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          ลบ
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-1 text-sm">ชื่อศูนย์สอบ *</label>
+                        <input
+                          type="text"
+                          name="stationName"
+                          value={station.stationName}
+                          onChange={(e) => handleStationChange(index, e)}
+                          className="w-full p-2 border rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-sm">ที่อยู่ *</label>
+                        <input
+                          type="text"
+                          name="address"
+                          value={station.address}
+                          onChange={(e) => handleStationChange(index, e)}
+                          className="w-full p-2 border rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-sm">ความจุ (คน) *</label>
+                        <input
+                          type="number"
+                          name="capacity"
+                          value={station.capacity}
+                          onChange={(e) => handleStationChange(index, e)}
+                          min="0"
+                          className="w-full p-2 border rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-sm">รหัสศูนย์</label>
+                        <input
+                          type="number"
+                          value={station.code}
+                          className="w-full p-2 border rounded bg-gray-200"
+                          readOnly
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-medium"
+                >
+                  📥 สร้างเหตุการณ์ใหม่
+                </button>
+              </div>
+            </form>
+          </section>
+        );
+
       default:
         return null;
     }
@@ -572,6 +1025,22 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => setSelectedTopic("certificate")}
               >
                 4. Certificate
+              </button>
+            </li>
+            <li>
+              <button
+                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "editLanding" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                onClick={() => setSelectedTopic("editLanding")}
+              >
+                5. แก้ไขหน้า Landing
+              </button>
+            </li>
+            <li>
+              <button
+                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "addEvent" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                onClick={() => setSelectedTopic("addEvent")}
+              >
+                6. Add Event
               </button>
             </li>
           </ul>

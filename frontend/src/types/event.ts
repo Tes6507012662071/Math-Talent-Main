@@ -1,30 +1,18 @@
-import { ReactNode } from "react";
+// frontend/src/types/event.ts
+export interface Station {
+  stationName: string;
+  address: string;
+  capacity: number;
+  code: number;
+}
 
 export interface Event {
-  location: string;
   _id: string;
-  title: string;
-  description: string;
-  date: string;
+  nameEvent: string;
+  detail?: string;
+  dateAndTime: string;
+  location?: string;
+  images?: string;
   registrationType: 'individual' | 'school';
-  detail: string;
-}
-
-export interface ExamSchedule {
-  level: string;
-  registerTime: string;
-  examTime: string;
-  examlocation: string;
-}
-
-export interface DetailEvent {
-  id: string;
-  title: string;
-  description: string;
-  date: string; // หรือ Date string
-  location: string;
-  registrationType: string;
-  detail: string;
-  image: string;
-  examSchedules?: ExamSchedule[];
+  stations: Station[];
 }

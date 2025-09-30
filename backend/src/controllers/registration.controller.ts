@@ -2,14 +2,10 @@ import { Request, Response } from "express";
 import Registration from "../models/Registration";
 import IndividualRegistration from "../models/IndividualRegistration";
 
-
-interface CustomRequest extends Request {
-  user?: { id: string };
-}
-
+// ✅ ลบ CustomRequest ออกทั้งหมด — ใช้ global type
 
 // ดึงข้อมูล registration ของ user คนที่ล็อกอิน (แสดง event + status)
-export const getMyEvents = async (req: CustomRequest, res: Response) => {
+export const getMyEvents = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -17,7 +13,7 @@ export const getMyEvents = async (req: CustomRequest, res: Response) => {
     }
 
     const registrations = await Registration.find({ user: userId })
-      .populate("event")  // ดึงข้อมูล event มาแสดงด้วย
+      .populate("event")
       .exec();
 
     res.json(registrations);
@@ -27,7 +23,7 @@ export const getMyEvents = async (req: CustomRequest, res: Response) => {
   }
 };
 
-export const uploadSlip = async (req: CustomRequest, res: Response) => {
+export const uploadSlip = async (req: Request, res: Response) => {
   try {
     const eventId = req.params.id;
     const userId = req.user?.id;
@@ -35,15 +31,18 @@ export const uploadSlip = async (req: CustomRequest, res: Response) => {
 
     console.log("📥 uploadSlip called:", { eventId, userId, slipPath });
 
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     if (!slipPath) {
       return res.status(400).json({ message: "❌ ไม่พบไฟล์ slip" });
     }
 
-    // ✅ ใช้ upsert: true เพื่อสร้าง record ใหม่ถ้ายังไม่มี
     const registration = await Registration.findOneAndUpdate(
       { event: eventId, user: userId },
       { slipUrl: slipPath, status: "slip_uploaded" },
-      { new: true, upsert: true }   // <<<< สำคัญ
+      { new: true, upsert: true }
     );
 
     console.log("✅ Slip uploaded for registration:", registration._id);
@@ -64,10 +63,9 @@ export const getApplicantsByEvent = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
 
-    // หา registration ทั้งหมดที่สมัคร eventId นี้
     const applicants = await IndividualRegistration.find({ eventId })
-      .populate("userId", "fullname userCode email") // ดึงข้อมูล user ที่เกี่ยวข้อง
-      .populate("eventId", "title");                 // ดึงชื่อ event
+      .populate("userId", "fullname userCode email")
+      .populate("eventId", "title");
 
     res.json(applicants);
   } catch (error) {
