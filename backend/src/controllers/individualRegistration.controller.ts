@@ -1,11 +1,9 @@
 import path from "path";
 import { Request, Response } from "express";
 import IndividualRegistration from "../models/IndividualRegistration";
-import Event from "../models/Event";
+import Event, { IStation } from "../models/Event";
 import fs from "fs";
 import multer from "multer";
-
-// ✅ ลบ CustomRequest ออกทั้งหมด — ใช้ global type
 
 const uploadFolder = path.join(__dirname, "../../uploads/slips");
 if (!fs.existsSync(uploadFolder)) fs.mkdirSync(uploadFolder, { recursive: true });
@@ -20,33 +18,50 @@ const storage = multer.diskStorage({
 
 export const uploadSlipMiddleware = multer({ storage });
 
+// Mapping ระดับชั้น → รหัส 2 หลัก
+const GRADE_TO_LL: Record<string, string> = {
+  "ประถมศึกษาตอนปลาย": "01",
+  "มัธยมศึกษาตอนต้น": "02",
+  "มัธยมศึกษาตอนปลาย": "03",
+};
+
 // REGISTER INDIVIDUAL
 export const registerIndividual = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { eventId, fullname, grade, school, phone, email } = req.body;
+    const { eventId, fullname, grade, school, station: stationName, phone, email } = req.body;
 
-    const event = await Event.findById(eventId);
+    // 1. ดึง event
+    const event = await Event.findById(eventId).lean();
     if (!event) return res.status(404).json({ message: "Event not found" });
-    const eventCode = event.code?.toString().padStart(2, "0") || "01";
 
-    const gradeMap: Record<string, number> = {
-      "ประถมศึกษาตอนปลาย": 1,
-      "มัธยมศึกษาตอนต้น": 2,
-      "มัธยมศึกษาตอนปลาย": 3,
-    };
-    const level = gradeMap[grade];
-    if (!level) return res.status(400).json({ message: "Invalid grade" });
+    // 2. ตรวจสอบ station
+    const selectedStation = event.stations.find((s: IStation) => s.stationName === stationName);
+    if (!selectedStation) {
+      return res.status(400).json({ message: "ไม่พบศูนย์สอบที่เลือก" });
+    }
 
-    const sequence = await IndividualRegistration.countDocuments({ eventId }) + 1;
+    // 3. ตรวจสอบระดับชั้น
+    const LL = GRADE_TO_LL[grade];
+    if (!LL) return res.status(400).json({ message: "Invalid grade" });
 
-    const year = new Date().getFullYear() % 100;
-    const levelCode = level.toString().padStart(2, "0");
-    const seqCode = sequence.toString().padStart(3, "0");
-    const userCode = `${year}${eventCode}${levelCode}${seqCode}`;
+    // 4. ดึงปีจาก event.dateAndTime
+    const YY = String(new Date(event.dateAndTime).getFullYear()).slice(-2);
 
+    // 5. รหัสศูนย์สอบ (2 หลัก)
+    const SS = String(selectedStation.code).padStart(2, "0");
+
+    // 6. ลำดับการสมัคร (4 หลัก) — นับเฉพาะ event นี้
+    const count = await IndividualRegistration.countDocuments({ eventId });
+    const CCCC = String(count + 1).padStart(4, "0");
+
+    // 7. สร้างรหัส
+    const userCode = `${YY}${SS}${LL}${CCCC}`;
+    const adminCode = `${event.code}${userCode}`; // เช่น "012503030012"
+
+    // 8. บันทึก
     const newRegistration = new IndividualRegistration({
       eventId,
       fullname,
@@ -57,6 +72,8 @@ export const registerIndividual = async (req: Request, res: Response) => {
       userId,
       status: "registered",
       userCode,
+      adminCode, // ✅ เก็บไว้
+      stationName, // ✅ เก็บชื่อศูนย์สอบที่เลือก
     });
 
     await newRegistration.save();
@@ -64,8 +81,7 @@ export const registerIndividual = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: "ลงทะเบียนเรียบร้อยแล้ว",
-      userCode,
-      eventId,
+      userCode, // ✅ ส่งให้ user เห็น
     });
   } catch (error) {
     console.error("❌ Register Individual Error:", error);
@@ -90,14 +106,14 @@ export const getMyRegistrations = async (req: Request, res: Response) => {
           _id: reg._id,
           event: {
             _id: reg.eventId._id,
-            title: reg.eventId.title,
-            description: reg.eventId.description,
-            date: reg.eventId.date,
+            title: reg.eventId.nameEvent, // ✅ nameEvent แทน title
+            description: reg.eventId.detail, // ✅ detail แทน description
+            date: reg.eventId.dateAndTime, // ✅ dateAndTime แทน date
             location: reg.eventId.location,
             detail: reg.eventId.detail,
             registrationType: reg.eventId.registrationType,
-            image: reg.eventId.image,
-            examSchedules: reg.eventId.examSchedules,
+            image: reg.eventId.images, // ✅ images แทน image
+            examSchedules: reg.eventId.stations, // ✅ stations แทน examSchedules
           },
           fullname: reg.fullname,
           grade: reg.grade,
@@ -108,6 +124,7 @@ export const getMyRegistrations = async (req: Request, res: Response) => {
           slipUrl: reg.slipUrl,
           certificateUrl: reg.certificateUrl,
           userCode: reg.userCode,
+          adminCode: reg.adminCode, // ✅ เพิ่ม (เฉพาะ admin ใช้)
           registrationId: reg._id,
           createdAt: reg.createdAt,
         };

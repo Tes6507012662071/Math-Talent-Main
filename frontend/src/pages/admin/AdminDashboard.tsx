@@ -4,6 +4,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import axios from "axios";
 import { fetchLandingContent, updateLandingContent, LandingData } from '../../api/landing';
+import { saveSurvey } from '../../api/survey';
 
 interface Applicant {
   _id: string;
@@ -14,9 +15,21 @@ interface Applicant {
   slipUrl?: string;
 }
 
+interface Station {
+  stationName: string;
+  address: string;
+  capacity: number;
+  code: number;
+}
+
 interface Event {
   _id: string;
-  title: string;
+  nameEvent: string;
+  detail: string;
+  dateAndTime: string;
+  location: string;
+  registrationType: 'individual' | 'school';
+  stations: Station[];
 }
 
 const AdminDashboard: React.FC = () => {
@@ -66,6 +79,169 @@ const AdminDashboard: React.FC = () => {
   });
   const [loadingLanding, setLoadingLanding] = useState(false);
   const [savingLanding, setSavingLanding] = useState(false);
+
+  // --- Edit Event & Survey State ---
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [editEventForm, setEditEventForm] = useState({
+    nameEvent: '',
+    detail: '',
+    dateAndTime: '',
+    location: '',
+    registrationType: 'individual' as 'individual' | 'school',
+    stations: [] as {
+      stationName: string;
+      address: string;
+      capacity: number;
+      code: number;
+    }[],
+  });
+  const [surveyTitle, setSurveyTitle] = useState("แบบสอบถามหลังสอบ");
+  const [questions, setQuestions] = useState<{ question: string; type: string; options?: string[] }[]>([
+    { question: "", type: "text" }
+  ]);
+  const [surveyActive, setSurveyActive] = useState(false);
+  const [editStatus, setEditStatus] = useState("");
+
+  // --- Survey Question Handlers ---
+  const addQuestion = () => {
+    setQuestions([...questions, { question: "", type: "text" }]);
+  };
+
+  const removeQuestion = (index: number) => {
+    setQuestions(questions.filter((_, i) => i !== index));
+  };
+
+  const updateQuestion = (index: number, field: string, value: any) => {
+    const newQuestions = [...questions];
+    newQuestions[index] = { ...newQuestions[index], [field]: value };
+    setQuestions(newQuestions);
+  };
+
+  const handleSaveSurvey = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !selectedEventId) return;
+
+    try {
+      setEditStatus("กำลังบันทึกแบบสอบถาม...");
+      await saveSurvey(selectedEventId, {
+        title: surveyTitle,
+        questions,
+        isActive: surveyActive
+      }, token);
+      setEditStatus("✅ บันทึกแบบสอบถามสำเร็จ!");
+      setTimeout(() => setEditStatus(""), 2000);
+    } catch (err) {
+      setEditStatus("❌ บันทึกล้มเหลว");
+    }
+  };
+
+  const loadEventData = async () => {
+    if (!selectedEventId) return;
+
+    try {
+      // ดึง event (ส่วนนี้ใช้ได้)
+      const eventRes = await axios.get<Event>(`http://localhost:5000/api/events/${selectedEventId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const event = eventRes.data;
+
+      // ดึง survey — อนุญาตให้ 404 ได้
+      let survey = null;
+      try {
+        const surveyRes = await axios.get(`http://localhost:5000/api/survey/${selectedEventId}`);
+        survey = surveyRes.data;
+      } catch (surveyErr: any) {
+        if (surveyErr.response?.status !== 404) {
+          console.error("Survey error (not 404):", surveyErr);
+        }
+        // ถ้า 404 → ถือว่าไม่มี survey → ใช้ค่าเริ่มต้น
+      }
+
+      // ตั้งค่า form event
+      setEditEventForm({
+        nameEvent: event.nameEvent,
+        detail: event.detail || '',
+        dateAndTime: new Date(event.dateAndTime).toISOString().slice(0, 16),
+        location: event.location || '',
+        registrationType: event.registrationType,
+        stations: event.stations.map(s => ({
+          stationName: s.stationName,
+          address: s.address,
+          capacity: s.capacity,
+          code: s.code
+        }))
+      });
+
+      // ตั้งค่า survey
+      if (survey) {
+        setSurveyTitle(survey.title || "แบบสอบถามหลังสอบ");
+        setQuestions(survey.questions || [{ question: "", type: "text" }]);
+        setSurveyActive(survey.isActive || false);
+      } else {
+        // ✅ ใช้ค่าเริ่มต้นเมื่อไม่มี survey
+        setSurveyTitle("แบบสอบถามหลังสอบ");
+        setQuestions([{ question: "", type: "text" }]);
+        setSurveyActive(false);
+      }
+    } catch (err) {
+      console.error("โหลดข้อมูล event ไม่ได้:", err);
+      alert("ไม่สามารถโหลดข้อมูลกิจกรรมนี้ได้");
+    }
+  };
+
+  useEffect(() => {
+    loadEventData();
+  }, [selectedEventId]);
+
+  useEffect(() => {
+  if (!selectedEventId) return;
+
+  const loadEventData = async () => {
+    try {
+      // ดึง event
+      const eventRes = await axios.get<Event>(`http://localhost:5000/api/events/${selectedEventId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const event = eventRes.data;
+
+      // ดึง survey
+      const surveyRes = await axios.get(`http://localhost:5000/api/survey/${selectedEventId}`);
+      const survey = surveyRes.data;
+
+      // ตั้งค่า form event
+      setEditEventForm({
+        nameEvent: event.nameEvent,
+        detail: event.detail || '',
+        dateAndTime: new Date(event.dateAndTime).toISOString().slice(0, 16),
+        location: event.location || '',
+        registrationType: event.registrationType,
+        stations: event.stations.map(s => ({
+          stationName: s.stationName,
+          address: s.address,
+          capacity: s.capacity,
+          code: s.code
+        }))
+      });
+
+      // ตั้งค่า survey
+      if (survey) {
+        setSurveyTitle(survey.title || "แบบสอบถามหลังสอบ");
+        setQuestions(survey.questions || [{ question: "", type: "text" }]);
+        setSurveyActive(survey.isActive || false);
+      } else {
+        // ถ้ายังไม่มี survey → ตั้งค่าเริ่มต้น
+        setSurveyTitle("แบบสอบถามหลังสอบ");
+        setQuestions([{ question: "", type: "text" }]);
+        setSurveyActive(false);
+      }
+    } catch (err) {
+      console.error("โหลดข้อมูล event ไม่ได้:", err);
+      alert("ไม่สามารถโหลดข้อมูลกิจกรรมนี้ได้");
+    }
+  };
+
+  loadEventData();
+}, [selectedEventId]);
 
   // --- Fetch events ---
   useEffect(() => {
@@ -426,6 +602,53 @@ const AdminDashboard: React.FC = () => {
       setAddEventStatus(`❌ สร้างล้มเหลว: ${err.response?.data?.message || 'ไม่ทราบสาเหตุ'}`);
     }
   };
+
+  const handleSaveAll = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !selectedEventId) return;
+
+    try {
+      setEditStatus("กำลังบันทึก...");
+
+      // 1. บันทึก Event
+      const formData = new FormData();
+      formData.append('nameEvent', editEventForm.nameEvent);
+      if (editEventForm.detail) formData.append('detail', editEventForm.detail);
+      formData.append('dateAndTime', new Date(editEventForm.dateAndTime).toISOString());
+      if (editEventForm.location) formData.append('location', editEventForm.location);
+      formData.append('registrationType', editEventForm.registrationType);
+      formData.append('stations', JSON.stringify(editEventForm.stations));
+      if (eventImageFile) {
+        formData.append('image', eventImageFile);
+      }
+
+      await axios.patch(
+        `http://localhost:5000/api/events/${selectedEventId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      // 2. บันทึก Survey
+      await saveSurvey(selectedEventId, {
+        title: surveyTitle,
+        questions,
+        isActive: surveyActive
+      }, token);
+
+      setEditStatus("✅ บันทึกทุกอย่างสำเร็จ!");
+      setTimeout(() => setEditStatus(""), 2000);
+    } catch (err: any) {
+      console.error("บันทึกล้มเหลว:", err);
+      const msg = err.response?.data?.message || err.message || "ไม่ทราบสาเหตุ";
+      setEditStatus(`❌ บันทึกล้มเหลว: ${msg}`);
+    }
+  };
+
   // --- Render content ---
   const renderContent = () => {
     switch (selectedTopic) {
@@ -441,7 +664,7 @@ const AdminDashboard: React.FC = () => {
               <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
-                  {ev.title}
+                  {ev.nameEvent}
                 </option>
               ))}
             </select>
@@ -468,7 +691,7 @@ const AdminDashboard: React.FC = () => {
               <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
-                  {ev.title}
+                  {ev.nameEvent}
                 </option>
               ))}
             </select>
@@ -579,7 +802,7 @@ const AdminDashboard: React.FC = () => {
               <option value="">-- Select Event --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
-                  {ev.title}
+                  {ev.nameEvent}
                 </option>
               ))}
             </select>
@@ -613,7 +836,7 @@ const AdminDashboard: React.FC = () => {
                 <option value="">-- Select Event --</option>
                 {events.map((ev) => (
                   <option key={ev._id} value={ev._id}>
-                    {ev.title}
+                    {ev.nameEvent}
                   </option>
                 ))}
               </select>
@@ -982,6 +1205,151 @@ const AdminDashboard: React.FC = () => {
             </form>
           </section>
         );
+      
+      case "editEvent":
+        return (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">✏️ แก้ไขกิจกรรมและแบบสอบถาม</h2>
+
+            {/* เลือกกิจกรรม */}
+            <div className="mb-6">
+              <label className="block mb-2 font-medium">เลือกกิจกรรมที่ต้องการแก้ไข</label>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">-- เลือกกิจกรรม --</option>
+                {events.map(ev => (
+                  <option key={ev._id} value={ev._id}>{ev.nameEvent}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedEventId && (
+              <>
+                {/* ส่วนแก้ไข Event */}
+                <div className="mb-8 p-4 border rounded bg-gray-50">
+                  <h3 className="text-xl font-semibold mb-4">แก้ไขข้อมูลกิจกรรม</h3>
+                  
+                  {/* ฟอร์มแก้ไข event (คล้าย Add Event) */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block mb-1">ชื่อกิจกรรม</label>
+                      <input
+                        type="text"
+                        value={editEventForm.nameEvent}
+                        onChange={(e) => setEditEventForm(prev => ({ ...prev, nameEvent: e.target.value }))}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">วันที่และเวลา</label>
+                      <input
+                        type="datetime-local"
+                        value={editEventForm.dateAndTime}
+                        onChange={(e) => setEditEventForm(prev => ({ ...prev, dateAndTime: e.target.value }))}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    {/* ... ฟิลด์อื่น ๆ เช่น detail, location, stations ... */}
+                  </div>
+                </div>
+
+                {/* ส่วนจัดการแบบสอบถาม */}
+                <div className="p-4 border rounded">
+                  <h3 className="text-xl font-semibold mb-4">แบบสอบถามหลังสอบ</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block mb-2">หัวข้อแบบสอบถาม</label>
+                    <input
+                      type="text"
+                      value={surveyTitle}
+                      onChange={(e) => setSurveyTitle(e.target.value)}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">คำถาม</span>
+                      <button
+                        type="button"
+                        onClick={addQuestion}
+                        className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        + เพิ่มคำถาม
+                      </button>
+                    </div>
+
+                    {questions.map((q, idx) => (
+                      <div key={idx} className="border p-3 mb-3 rounded bg-white">
+                        <input
+                          type="text"
+                          placeholder="พิมพ์คำถาม..."
+                          value={q.question}
+                          onChange={(e) => updateQuestion(idx, 'question', e.target.value)}
+                          className="w-full p-2 mb-2 border rounded"
+                        />
+                        <select
+                          value={q.type}
+                          onChange={(e) => updateQuestion(idx, 'type', e.target.value)}
+                          className="p-2 border rounded mb-2"
+                        >
+                          <option value="text">ข้อความ</option>
+                          <option value="radio">ตัวเลือกเดียว</option>
+                          <option value="checkbox">หลายตัวเลือก</option>
+                        </select>
+                        {q.type !== 'text' && (
+                          <div>
+                            <label className="block text-sm mb-1">ตัวเลือก (คั่นด้วยเครื่องหมายจุลภาค)</label>
+                            <input
+                              type="text"
+                              value={q.options?.join(', ') || ''}
+                              onChange={(e) => updateQuestion(idx, 'options', e.target.value.split(',').map(o => o.trim()))}
+                              className="w-full p-2 border rounded"
+                            />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeQuestion(idx)}
+                          className="mt-2 text-red-600 hover:text-red-800"
+                        >
+                          ลบคำถาม
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={surveyActive}
+                      onChange={(e) => setSurveyActive(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <label htmlFor="isActive">เปิดให้ผู้สมัครกรอกแบบสอบถามหลังสอบ</label>
+                  </div>
+
+                  {editStatus && (
+                    <div className={`mb-3 p-2 rounded ${editStatus.includes('✅') ? 'bg-green-100' : 'bg-red-100'}`}>
+                      {editStatus}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleSaveAll}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    บันทึกการเปลี่ยนแปลง
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        );
 
       default:
         return null;
@@ -1041,6 +1409,14 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => setSelectedTopic("addEvent")}
               >
                 6. Add Event
+              </button>
+            </li>
+            <li>
+              <button
+                className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "editEvent" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
+                onClick={() => setSelectedTopic("editEvent")}
+              >
+                7. แก้ไขกิจกรรมและแบบสอบถาม
               </button>
             </li>
           </ul>

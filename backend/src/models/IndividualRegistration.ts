@@ -1,4 +1,4 @@
-// models/IndividualRegistration.ts
+// backend/src/models/IndividualRegistration.ts
 import mongoose from 'mongoose';
 
 const IndividualRegistrationSchema = new mongoose.Schema({
@@ -10,7 +10,14 @@ const IndividualRegistrationSchema = new mongoose.Schema({
   email: { type: String, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  // ✅ Status tracking fields
+  // ✅ ข้อมูลศูนย์สอบที่เลือก
+  stationName: { type: String, required: true }, // เช่น "ศูนย์สอบกรุงเทพฯ"
+
+  // ✅ รหัสผู้สมัคร
+  userCode: { type: String, unique: true, required: true },
+  adminCode: { type: String, required: true }, // เช่น "012503030012"
+
+  // ✅ Status tracking
   status: {
     type: String,
     enum: ["registered", "slip_uploaded", "verified", "exam_ready", "completed"],
@@ -19,8 +26,6 @@ const IndividualRegistrationSchema = new mongoose.Schema({
   slipUrl: { type: String },
   certificateUrl: { type: String },
 
-  // ✅ Add userCode field
-  userCode: { type: String, unique: true },
   createdAt: { type: Date, default: Date.now },
 });
 

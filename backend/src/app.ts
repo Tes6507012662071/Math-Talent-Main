@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 import attendanceRoutes from "./routes/attendance.routes";
 import certificateRoutes from "./routes/certificate.route";
 import landingRoutes from "./routes/landing.routes";
+import surveyRoutes from './routes/survey.routes';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/uploads/slips", express.static(path.join(__dirname, "../uploads/slips"
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/landing", landingRoutes);
+app.use('/api/surveys', surveyRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

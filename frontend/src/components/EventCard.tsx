@@ -17,7 +17,6 @@ const EventCard: React.FC<Props> = ({ event }) => {
     }
   };
 
-  // แปลง dateAndTime เป็นรูปแบบที่อ่านง่าย
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('th-TH', {
@@ -30,26 +29,41 @@ const EventCard: React.FC<Props> = ({ event }) => {
   };
 
   return (
-    <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-      {/* ✅ ใช้ nameEvent แทน title */}
-      <h3 className="text-lg font-semibold">{event.nameEvent}</h3>
-      
-      {/* ✅ ใช้ dateAndTime และแปลงเป็นวันที่อ่านง่าย */}
-      <p className="text-sm text-gray-600">
-        {formatDate(event.dateAndTime)} @ {event.location}
-      </p>
-      
-      {/* ✅ ใช้ detail แทน description */}
-      <p className="my-2 text-gray-700">{event.detail}</p>
-      
-      <div className="flex justify-end space-x-2 mt-6">
-        <a href={`/events/${event._id}`} className="text-blue-600 hover:underline">More</a>
-        <button 
-          onClick={handleRegisterClick}
-          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-        >
-          สมัครสอบ
-        </button>
+    <div className="border rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+      {/* รูปภาพด้านบน */}
+      {event.images ? (
+        <div className="h-48 w-full overflow-hidden">
+          <img
+            src={event.images}
+            alt={event.nameEvent}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="h-48 w-full bg-gray-100 flex items-center justify-center">
+          <span className="text-gray-400">ไม่มีรูปภาพ</span>
+        </div>
+      )}
+
+      {/* ข้อมูลด้านล่าง */}
+      <div className="p-4">
+        <h3 className="text-lg font-semibold mb-2">{event.nameEvent}</h3>
+        
+        <p className="text-sm text-gray-600 mb-3">
+          {formatDate(event.dateAndTime)} @ {event.location}
+        </p>
+
+        <div className="flex justify-between items-center mt-4">
+          <a href={`/events/${event._id}`} className="text-blue-600 hover:underline text-sm">
+            ดูรายละเอียด
+          </a>
+          <button 
+            onClick={handleRegisterClick}
+            className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
+          >
+            สมัครสอบ
+          </button>
+        </div>
       </div>
     </div>
   );

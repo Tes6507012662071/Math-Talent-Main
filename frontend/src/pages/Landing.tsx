@@ -78,7 +78,7 @@ const Landing: React.FC = () => {
             </div>
             <div className="w-full lg:w-1/2">
               <img
-                src="/images/cat.gif"
+                src="/images/logo.jpg"
                 alt="Mathematics Illustration"
                 className="w-full h-auto object-contain"
               />
