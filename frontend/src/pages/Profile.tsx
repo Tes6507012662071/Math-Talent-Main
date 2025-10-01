@@ -615,6 +615,9 @@ const renderActivityTab = () => {
     completed: "bg-green-100 text-green-800",
   };
 
+  const ongoingEvents = events.filter(e => e.status !== "completed");
+  const completedEvents = events.filter(e => e.status === "completed");
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
@@ -626,12 +629,12 @@ const renderActivityTab = () => {
         </div>
       )}
 
-      {/* ✅ Events List */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Registered Events</h3>
+      {/* ✅ Ongoing Events Section */}
+      <div className="space-y-4 mb-8">
+        <h3 className="text-lg font-semibold text-gray-800">Ongoing Events ({ongoingEvents.length})</h3>
 
-        {events.length > 0 ? (
-          events.map((e) => (
+        {ongoingEvents.length > 0 ? (
+          ongoingEvents.map((e) => (
             <div
               key={e._id}
               className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg"
@@ -686,24 +689,62 @@ const renderActivityTab = () => {
                       </button>
                     </form>
                   )}
-
-                  {/* ✅ ปุ่ม Download Certificate เฉพาะ status completed */}
-                  {e.status === "completed" && (
-                    <button
-                      onClick={() => handleDownloadCertificate(e.event._id, e.userCode)}
-                      className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
-                    >
-                      <Download size={16} />
-                      Certificate
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8">
-            No events registered yet
+          <p className="text-gray-500 text-center py-4">
+            No ongoing events
+          </p>
+        )}
+      </div>
+
+      {/* ✅ Completed Events Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-800">Completed Events ({completedEvents.length})</h3>
+
+        {completedEvents.length > 0 ? (
+          completedEvents.map((e) => (
+            <div
+              key={e._id}
+              className="flex flex-col gap-2 p-4 bg-green-50 rounded-lg border border-green-200"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
+                  <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
+                  {e.event?.location && (
+                    <p className="text-sm text-gray-500">
+                      Location: {e.event.location}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
+
+                  {/* ✅ Status Badge */}
+                  <span
+                    className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
+                      statusColorMap[e.status] || "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {getStatusText(e.status)}
+                  </span>
+                </div>
+
+                {/* ✅ Button to view certificate */}
+                <button
+                  onClick={() => setActiveTab('certificate')}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+                >
+                  <Award size={16} />
+                  View Certificate
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-4">
+            No completed events yet
           </p>
         )}
       </div>

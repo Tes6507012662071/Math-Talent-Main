@@ -90,7 +90,7 @@ export const createEvent = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: "สร้างเหตุการณ์สำเร็จ",
-       newEvent,
+      newEvent,
     });
   } catch (error: any) {
     console.error("Create event error:", error);
