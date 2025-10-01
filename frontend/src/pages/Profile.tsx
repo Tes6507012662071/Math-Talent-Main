@@ -3,6 +3,7 @@ import axios from "axios";
 import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, TrendingUp, CheckCircle } from 'lucide-react';
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
+import { fetchSurvey, saveSurvey, submitSurveyResponse } from "../api/survey";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -49,6 +50,20 @@ interface Registration {
   status: string;
 }
 
+interface SurveyQuestion {
+  question: string;
+  type: 'text' | 'radio' | 'checkbox';
+  options?: string[];
+}
+
+interface Survey {
+  _id: string;
+  eventId: string;
+  title: string;
+  questions: SurveyQuestion[];
+  isActive: boolean;
+}
+
 const Profile: React.FC = () => {
   // API-related state
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -64,6 +79,13 @@ const Profile: React.FC = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<{ [key: string]: number }>({});
+
+  // Survey state
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [currentSurvey, setCurrentSurvey] = useState<Survey | null>(null);
+  const [surveyAnswers, setSurveyAnswers] = useState<{ [key: number]: string | string[] }>({});
+  const [pendingDownload, setPendingDownload] = useState<{ eventId: string; userCode: string } | null>(null);
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
 
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -223,7 +245,31 @@ const Profile: React.FC = () => {
     });
   };
 
-  const handleDownloadCertificate = async (eventId: string, userCode: string) => {
+  // ✅ New function to handle certificate download with survey
+  const handleCertificateDownloadClick = async (eventId: string, userCode: string) => {
+    try {
+      // Fetch survey for this event
+      const surveyData = await fetchSurvey(eventId);
+      
+      if (surveyData && surveyData.isActive) {
+        // Show survey modal
+        setCurrentSurvey(surveyData);
+        setPendingDownload({ eventId, userCode });
+        setSurveyAnswers({});
+        setShowSurveyModal(true);
+      } else {
+        // No survey, download directly
+        await downloadCertificate(eventId, userCode);
+      }
+    } catch (error) {
+      console.error("❌ Error checking survey:", error);
+      // If survey fetch fails, allow download anyway
+      await downloadCertificate(eventId, userCode);
+    }
+  };
+
+  // ✅ Function to actually download certificate
+  const downloadCertificate = async (eventId: string, userCode: string) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
@@ -259,7 +305,62 @@ const Profile: React.FC = () => {
     }
   };
 
+  // ✅ Handle survey submission
+  const handleSurveySubmit = async () => {
+    if (!currentSurvey || !pendingDownload) return;
 
+    // Validate all required questions are answered
+    const unansweredQuestions = currentSurvey.questions.filter((_, index) => {
+      const answer = surveyAnswers[index];
+      return !answer || (Array.isArray(answer) && answer.length === 0) || answer === '';
+    });
+
+    if (unansweredQuestions.length > 0) {
+      alert('กรุณาตอบคำถามให้ครบทุกข้อ');
+      return;
+    }
+
+    try {
+      setSurveySubmitting(true);
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      // Format survey data
+      const surveyData = {
+        responses: currentSurvey.questions.map((q, index) => ({
+          question: q.question,
+          answer: surveyAnswers[index]
+        }))
+      };
+
+      // Submit survey (Need to implement/change to submitSurveyResponse Hook)
+      await saveSurvey(pendingDownload.eventId, surveyData, token);
+
+      // Close modal
+      setShowSurveyModal(false);
+
+      // Download certificate
+      await downloadCertificate(pendingDownload.eventId, pendingDownload.userCode);
+
+      // Reset state
+      setCurrentSurvey(null);
+      setPendingDownload(null);
+      setSurveyAnswers({});
+    } catch (error) {
+      console.error("❌ Survey submission error:", error);
+      alert("เกิดข้อผิดพลาดในการส่งแบบสอบถาม");
+    } finally {
+      setSurveySubmitting(false);
+    }
+  };
+
+  // ✅ Handle survey answer change
+  const handleSurveyAnswerChange = (questionIndex: number, value: string | string[]) => {
+    setSurveyAnswers((prev) => ({
+      ...prev,
+      [questionIndex]: value
+    }));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -281,6 +382,7 @@ const Profile: React.FC = () => {
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
   console.log("✅ Current events state:", events);
+
   // Dashboard Tab
   const renderDashboardTab = () => {
     const completedEvents = events.filter(event => event.status === 'completed');
@@ -604,158 +706,151 @@ const Profile: React.FC = () => {
     </div>
   );
   
+  // ✅ Activity Tab
+  const renderActivityTab = () => {
+    const statusColorMap: Record<string, string> = {
+      pending: "bg-gray-100 text-gray-800",
+      slip_uploaded: "bg-yellow-100 text-yellow-800",
+      verified: "bg-blue-100 text-blue-800",
+      exam_ready: "bg-purple-100 text-purple-800",
+      completed: "bg-green-100 text-green-800",
+    };
 
-// ✅ Activity Tab
-const renderActivityTab = () => {
-  const statusColorMap: Record<string, string> = {
-    pending: "bg-gray-100 text-gray-800",
-    slip_uploaded: "bg-yellow-100 text-yellow-800",
-    verified: "bg-blue-100 text-blue-800",
-    exam_ready: "bg-purple-100 text-purple-800",
-    completed: "bg-green-100 text-green-800",
-  };
+    const ongoingEvents = events.filter(e => e.status !== "completed");
+    const completedEvents = events.filter(e => e.status === "completed");
 
-  const ongoingEvents = events.filter(e => e.status !== "completed");
-  const completedEvents = events.filter(e => e.status === "completed");
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
 
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
+        {/* ✅ Success Popup */}
+        {showSuccessPopup && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+            📤 อัปโหลดสลิปสำเร็จแล้ว!
+          </div>
+        )}
 
-      {/* ✅ Success Popup */}
-      {showSuccessPopup && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
-          📤 อัปโหลดสลิปสำเร็จแล้ว!
-        </div>
-      )}
+        {/* ✅ Ongoing Events Section */}
+        <div className="space-y-4 mb-8">
+          <h3 className="text-lg font-semibold text-gray-800">Ongoing Events ({ongoingEvents.length})</h3>
 
-      {/* ✅ Ongoing Events Section */}
-      <div className="space-y-4 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800">Ongoing Events ({ongoingEvents.length})</h3>
+          {ongoingEvents.length > 0 ? (
+            ongoingEvents.map((e) => (
+              <div
+                key={e._id}
+                className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
+                    <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
+                    {e.event?.location && (
+                      <p className="text-sm text-gray-500">
+                        Location: {e.event.location}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
 
-        {ongoingEvents.length > 0 ? (
-          ongoingEvents.map((e) => (
-            <div
-              key={e._id}
-              className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  {/* ✅ Fixed: Use the helper function instead of direct access */}
-                  <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
-                  <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
-                  {e.event?.location && (
-                    <p className="text-sm text-gray-500">
-                      Location: {e.event.location}
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
-
-                  {/* ✅ Status Badge */}
-                  <span
-                    className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
-                      statusColorMap[e.status] || "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {getStatusText(e.status)}
-                  </span>
-                </div>
-
-                {/* ✅ Action buttons */}
-                <div className="flex gap-2">
-                  {/* ✅ Form upload เฉพาะสถานะ registered เท่านั้น */}
-                  {e.status === "registered" && (
-                    <form
-                      onSubmit={(ev) => {
-                        ev.preventDefault();
-                        handleSlipSubmit(e._id);
-                      }}
-                      className="flex items-center gap-2"
+                    {/* ✅ Status Badge */}
+                    <span
+                      className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
+                        statusColorMap[e.status] || "bg-gray-100 text-gray-800"
+                      }`}
                     >
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(event) => handleFileSelect(event, e._id)}
-                        className="border p-1 text-sm rounded-md"
-                        required
-                        disabled={uploading}
-                      />
-                      <button
-                        type="submit"
-                        className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        disabled={uploading}
+                      {getStatusText(e.status)}
+                    </span>
+                  </div>
+
+                  {/* ✅ Action buttons */}
+                  <div className="flex gap-2">
+                    {e.status === "registered" && (
+                      <form
+                        onSubmit={(ev) => {
+                          ev.preventDefault();
+                          handleSlipSubmit(e._id);
+                        }}
+                        className="flex items-center gap-2"
                       >
-                        {uploading ? "Uploading..." : "Submit"}
-                      </button>
-                    </form>
-                  )}
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(event) => handleFileSelect(event, e._id)}
+                          className="border p-1 text-sm rounded-md"
+                          required
+                          disabled={uploading}
+                        />
+                        <button
+                          type="submit"
+                          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                          disabled={uploading}
+                        >
+                          {uploading ? "Uploading..." : "Submit"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No ongoing events
-          </p>
-        )}
-      </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No ongoing events
+            </p>
+          )}
+        </div>
 
-      {/* ✅ Completed Events Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Completed Events ({completedEvents.length})</h3>
+        {/* ✅ Completed Events Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Completed Events ({completedEvents.length})</h3>
 
-        {completedEvents.length > 0 ? (
-          completedEvents.map((e) => (
-            <div
-              key={e._id}
-              className="flex flex-col gap-2 p-4 bg-green-50 rounded-lg border border-green-200"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
-                  <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
-                  {e.event?.location && (
-                    <p className="text-sm text-gray-500">
-                      Location: {e.event.location}
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
+          {completedEvents.length > 0 ? (
+            completedEvents.map((e) => (
+              <div
+                key={e._id}
+                className="flex flex-col gap-2 p-4 bg-green-50 rounded-lg border border-green-200"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
+                    <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.date)}</p>
+                    {e.event?.location && (
+                      <p className="text-sm text-gray-500">
+                        Location: {e.event.location}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600">User Code: {e.userCode}</p>
 
-                  {/* ✅ Status Badge */}
-                  <span
-                    className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
-                      statusColorMap[e.status] || "bg-gray-100 text-gray-800"
-                    }`}
+                    <span
+                      className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium ${
+                        statusColorMap[e.status] || "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {getStatusText(e.status)}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setActiveTab('certificate')}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
                   >
-                    {getStatusText(e.status)}
-                  </span>
+                    <Award size={16} />
+                    View Certificate
+                  </button>
                 </div>
-
-                {/* ✅ Button to view certificate */}
-                <button
-                  onClick={() => setActiveTab('certificate')}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
-                >
-                  <Award size={16} />
-                  View Certificate
-                </button>
               </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No completed events yet
-          </p>
-        )}
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No completed events yet
+            </p>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   // Certificate Tab
   const renderCertificateTab = () => {
-    // If you want to use completedEvents, you can define it here if needed
-    // const completedEvents = events.filter(event => event.status === "completed");
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Certificates</h2>
@@ -774,9 +869,30 @@ const renderActivityTab = () => {
                 </div>
               </div>
 
-              {/* ✅ ใช้ userCode จาก event registration แทน user.userCode */}
               <button
-                onClick={() => handleDownloadCertificate(event.event._id, event.userCode)}
+                onClick={async () => {
+                  try {
+                    // Fetch survey for this event
+                    const surveyData = await fetchSurvey(event.event._id);
+                    
+                    // Check if survey exists and has questions
+                    if (surveyData && surveyData.questions && Array.isArray(surveyData.questions) && surveyData.questions.length > 0) {
+                      // Set survey and open modal
+                      setCurrentSurvey(surveyData);
+                      setPendingDownload({ eventId: event.event._id, userCode: event.userCode });
+                      setSurveyAnswers({}); // Reset answers
+                      setShowSurveyModal(true);
+                    } else {
+                      // No survey exists or no questions, download directly
+                      console.log('No survey found, downloading directly');
+                      handleCertificateDownloadClick(event.event._id, event.userCode);
+                    }
+                  } catch (error) {
+                    console.error('Error fetching survey:', error);
+                    // If survey fetch fails, allow direct download
+                    handleCertificateDownloadClick(event.event._id, event.userCode);
+                  }
+                }}
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download size={16} />
@@ -792,6 +908,130 @@ const renderActivityTab = () => {
             <p className="text-gray-600">No certificates available yet.</p>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // ✅ Survey Modal Component
+  const renderSurveyModal = () => {
+    if (!showSurveyModal || !currentSurvey) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">{currentSurvey.title}</h2>
+              <button
+                onClick={() => {
+                  setShowSurveyModal(false);
+                  setCurrentSurvey(null);
+                  setPendingDownload(null);
+                  setSurveyAnswers({});
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">กรุณาตอบแบบสอบถามก่อนดาวน์โหลดใบประกาศนียบัตร</p>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {currentSurvey.questions.map((question, index) => (
+              <div key={index} className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  {index + 1}. {question.question}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+
+                {question.type === 'text' && (
+                  <textarea
+                    value={(surveyAnswers[index] as string) || ''}
+                    onChange={(e) => handleSurveyAnswerChange(index, e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="กรุณาใส่คำตอบของคุณ"
+                  />
+                )}
+
+                {question.type === 'radio' && question.options && (
+                  <div className="space-y-2">
+                    {question.options.map((option, optIndex) => (
+                      <label key={optIndex} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`question-${index}`}
+                          value={option}
+                          checked={surveyAnswers[index] === option}
+                          onChange={(e) => handleSurveyAnswerChange(index, e.target.value)}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                        <span className="text-sm text-gray-700">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {question.type === 'checkbox' && question.options && (
+                  <div className="space-y-2">
+                    {question.options.map((option, optIndex) => (
+                      <label key={optIndex} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          value={option}
+                          checked={(surveyAnswers[index] as string[] || []).includes(option)}
+                          onChange={(e) => {
+                            const currentAnswers = (surveyAnswers[index] as string[]) || [];
+                            if (e.target.checked) {
+                              handleSurveyAnswerChange(index, [...currentAnswers, option]);
+                            } else {
+                              handleSurveyAnswerChange(index, currentAnswers.filter(a => a !== option));
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                        <span className="text-sm text-gray-700">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowSurveyModal(false);
+                  setCurrentSurvey(null);
+                  setPendingDownload(null);
+                  setSurveyAnswers({});
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleSurveySubmit}
+                disabled={surveySubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {surveySubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    กำลังส่ง...
+                  </>
+                ) : (
+                  <>
+                    ส่งคำตอบและดาวน์โหลด
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -840,43 +1080,46 @@ const renderActivityTab = () => {
               >
                 <FileText size={16} />
                 Activity List
-               </button>
-               <button
-               onClick={() => setActiveTab('certificate')}
-               className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
-                    activeTab === 'certificate'
+              </button>
+              <button
+                onClick={() => setActiveTab('certificate')}
+                className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${
+                  activeTab === 'certificate'
                     ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
-                >
+              >
                 <Award size={16} />
                 Certificates
-                </button>
+              </button>
             </nav>
-            </div>
-            <div className="px-6 py-4 border-t">
+          </div>
+          <div className="px-6 py-4 border-t">
             <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm"
             >
-                <LogOut size={16} />
-                Log Out
+              <LogOut size={16} />
+              Log Out
             </button>
-            </div>
+          </div>
         </aside>
 
         {/* Main Content */}
         <main className="flex-1 h-full self-stretch ml-4 bg-white shadow-lg rounded-2xl px-6 py-8 overflow-auto">
-            {activeTab === 'dashboard' && renderDashboardTab()}
-            {activeTab === 'profile' && renderProfileTab()}
-            {activeTab === 'activity' && renderActivityTab()}
-            {activeTab === 'certificate' && renderCertificateTab()}
+          {activeTab === 'dashboard' && renderDashboardTab()}
+          {activeTab === 'profile' && renderProfileTab()}
+          {activeTab === 'activity' && renderActivityTab()}
+          {activeTab === 'certificate' && renderCertificateTab()}
         </main>
-        </div>
-        <Footer />
+      </div>
+      
+      {/* Survey Modal */}
+      {renderSurveyModal()}
+      
+      <Footer />
     </>
-
   );
 };
 
-export default Profile;
+export default Profile
