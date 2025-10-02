@@ -688,13 +688,13 @@ const AdminDashboard: React.FC = () => {
       case "uploadPDF":
         return (
           <section>
-            <h2 className="font-semibold mb-3">1. Upload Solution PDF (เฉลยข้อสอบ)</h2>
+            <h2 className="font-semibold mb-3">1. อัพโหลดเฉลยข้อสอบ</h2>
             <select
               className="border p-2 rounded mr-4"
               value={selectedEventUploadPDF}
               onChange={(e) => setSelectedEventUploadPDF(e.target.value)}
             >
-              <option value="">-- Select Event --</option>
+              <option value="">-- เลือกกิจกรรม--</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.nameEvent}
@@ -706,7 +706,7 @@ const AdminDashboard: React.FC = () => {
               onClick={handleSolutionUpload}
               className="ml-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Upload
+              อัพโหลด
             </button>
             {uploadStatus && <p className="mt-2">{uploadStatus}</p>}
           </section>
@@ -718,13 +718,13 @@ const AdminDashboard: React.FC = () => {
 
         return (
           <section>
-            <h2 className="font-semibold mb-3">2. Check Applicant Slip</h2>
+            <h2 className="font-semibold mb-3">2. ตรวจสอบสลิปผู้สมัคร</h2>
             <select
               className="border p-2 rounded mb-4"
               value={selectedEventCheckSlip}
               onChange={(e) => setSelectedEventCheckSlip(e.target.value)}
             >
-              <option value="">-- Select Event --</option>
+              <option value="">-- เลือกกิจกรรม --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.nameEvent}
@@ -897,13 +897,13 @@ const AdminDashboard: React.FC = () => {
       case "uploadExcel":
         return (
           <section>
-            <h2 className="font-semibold mb-3">3. Upload Excel อัปเดตสถานะ "completed"</h2>
+            <h2 className="font-semibold mb-3">3. อัพโหลดไฟล์รายชื่อผู้เข้าสอบ</h2>
             <select
               className="border p-2 rounded mb-4"
               value={selectedEventUploadExcel}
               onChange={(e) => setSelectedEventUploadExcel(e.target.value)}
             >
-              <option value="">-- Select Event --</option>
+              <option value="">-- เลือกกิจกรรม --</option>
               {events.map((ev) => (
                 <option key={ev._id} value={ev._id}>
                   {ev.nameEvent}
@@ -915,7 +915,7 @@ const AdminDashboard: React.FC = () => {
               onClick={handleExcelUpload}
               className="ml-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Upload & Update Status
+              อัพโหลด และ อัพเดตสถานะ
             </button>
             {excelUploadStatus && <p className="mt-2">{excelUploadStatus}</p>}
           </section>
@@ -924,11 +924,11 @@ const AdminDashboard: React.FC = () => {
       case "certificate":
         return (
           <section>
-            <h2 className="font-semibold mb-3">4. Certificate (Certificate)</h2>
+            <h2 className="font-semibold mb-3">4. อัพโหลดใบประกาศนียบัตร</h2>
 
             {/* เลือก Event */}
             <div className="mb-4">
-              <label className="mr-2 font-medium">Select Event:</label>
+              <label className="mr-2 font-medium">เลือกกิจกรรม:</label>
               <select
                 className="border p-2 rounded"
                 value={selectedEventCertificate}
@@ -937,7 +937,7 @@ const AdminDashboard: React.FC = () => {
                   fetchCertificates(e.target.value);
                 }}
               >
-                <option value="">-- Select Event --</option>
+                <option value="">-- เลือกกิจกรรม--</option>
                 {events.map((ev) => (
                   <option key={ev._id} value={ev._id}>
                     {ev.nameEvent}
@@ -977,7 +977,7 @@ const AdminDashboard: React.FC = () => {
               disabled={!selectedEventCertificate || selectedCertificateFiles.length === 0}
               className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
             >
-              Upload Certificates
+              อัพโหลด Certificate
             </button>
 
             {/* Progress Bar */}
@@ -1032,7 +1032,7 @@ const AdminDashboard: React.FC = () => {
       case "editLanding":
         return (
           <section>
-            <h2 className="font-semibold mb-6 text-2xl">🖊️ แก้ไขหน้า Landing</h2>
+            <h2 className="font-semibold mb-6 text-2xl">🖊️ แก้ไขหน้าหลัก</h2>
             
             {loadingLanding ? (
               <div className="text-xl text-gray-500">กำลังโหลดข้อมูล...</div>
@@ -1731,14 +1731,14 @@ case "editEvent":
       <Navbar />
       <div className="p-6 flex space-x-6 max-w-6xl mx-auto">
         <aside className="w-64 border-r pr-4">
-          <h2 className="text-lg font-bold mb-4">Menu</h2>
+          <h2 className="text-lg font-bold mb-4">รายการ</h2>
           <ul className="space-y-2">
             <li>
               <button
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "uploadPDF" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("uploadPDF")}
               >
-                1. Upload Solution PDF
+                1. อัพโหลดเฉลยข้อสอบ
               </button>
             </li>
             <li>
@@ -1746,7 +1746,7 @@ case "editEvent":
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "checkSlip" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("checkSlip")}
               >
-                2. Check Applicant Slip
+                2. ตรวจสอบสลิปผู้สมัคร
               </button>
             </li>
             <li>
@@ -1754,7 +1754,7 @@ case "editEvent":
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "uploadExcel" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("uploadExcel")}
               >
-                3. Upload Excel
+                3. อัพโหลดไฟล์รายชื่อผู้เข้าสอบ (.xlsx)
               </button>
             </li>
             <li>
@@ -1762,7 +1762,7 @@ case "editEvent":
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "certificate" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("certificate")}
               >
-                4. Certificate
+                4. อัพโหลดใบประกาศนียบัตร
               </button>
             </li>
             <li>
@@ -1770,7 +1770,7 @@ case "editEvent":
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "editLanding" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("editLanding")}
               >
-                5. แก้ไขหน้า Landing
+                5. แก้ไขหน้าหลัก
               </button>
             </li>
             <li>
@@ -1778,7 +1778,7 @@ case "editEvent":
                 className={`w-full text-left px-3 py-2 rounded ${selectedTopic === "addEvent" ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}`}
                 onClick={() => setSelectedTopic("addEvent")}
               >
-                6. Add Event
+                6. เพิ่มกิจกรรม
               </button>
             </li>
             <li>

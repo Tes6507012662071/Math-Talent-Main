@@ -43,14 +43,14 @@ const Login: React.FC = () => {
         <h2 className="text-xl font-semibold mb-6 text-center">เข้าสู่ระบบ</h2>
         <form onSubmit={handleSubmit}>
           <AuthFormInput
-            label="Email"
+            label="อีเมล"
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
           />
           <AuthFormInput
-            label="Password"
+            label="รหัสผ่าน"
             type="password"
             name="password"
             value={form.password}

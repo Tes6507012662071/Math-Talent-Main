@@ -5,7 +5,9 @@ import { FaMapMarkerAlt as FaMapMarkerAltRaw } from "react-icons/fa";
 import { FaClock as FaClockRaw } from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
+import EventCard from "../components/EventCard";
+import { fetchEvents } from "../api/events";
+import { Event as EventType } from "../types/event";
 
 const FaCalendarAlt = FaCalendarAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaMapMarkerAlt = FaMapMarkerAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -22,7 +24,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: string; // หรือ Date string
+  date: string;
   location: string;
   registrationType: string;
   detail: string;
@@ -34,6 +36,7 @@ const EventDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
+  const [relatedEvents, setRelatedEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +47,7 @@ const EventDetail: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`http://localhost:5000/api/events/${id}`);  // ปรับ URL ให้ตรงกับ backend
+        const res = await fetch(`http://localhost:5000/api/events/${id}`);
         if (!res.ok) throw new Error(`เกิดข้อผิดพลาด: ${res.statusText}`);
 
         const data: Event = await res.json();
@@ -58,6 +61,23 @@ const EventDetail: React.FC = () => {
     };
 
     fetchEvent();
+  }, [id]);
+
+  useEffect(() => {
+    const loadRelatedEvents = async () => {
+      try {
+        const allEvents = await fetchEvents();
+        // Filter out current event and get only 3 events
+        const filtered = allEvents
+          .filter(evt => evt._id !== id)
+          .slice(0, 3);
+        setRelatedEvents(filtered);
+      } catch (err) {
+        console.error("Error loading related events:", err);
+      }
+    };
+
+    loadRelatedEvents();
   }, [id]);
 
   const handleRegister = () => {
@@ -128,10 +148,31 @@ const EventDetail: React.FC = () => {
           สมัครสอบ
         </button>
 
-        <h3 className="text-xl font-semibold text-[#003366] mb-6 text-center mt-16">
-          Other Events
-        </h3>
-        {/* หากต้องการดึง upcoming events จาก API จริง ให้เพิ่ม fetch และ state อีกตัว */}
+        {/* Related Events Section */}
+        <div className="mt-16">
+          <h3 className="text-xl font-semibold text-[#003366] mb-6 text-center">
+            กิจกรรมที่กำลังจะมาถึง
+          </h3>
+          
+          {relatedEvents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedEvents.map((evt) => (
+                <EventCard key={evt._id} event={evt} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">ไม่มีกิจกรรมอื่นในขณะนี้</p>
+          )}
+
+          <div className="text-center mt-8">
+            <Link
+              to="/events"
+              className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+            >
+              ดูกิจกรรมทั้งหมด
+            </Link>
+          </div>
+        </div>
       </div>
       <Footer />
     </div>

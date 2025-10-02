@@ -3,7 +3,7 @@ import axios from "axios";
 import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, TrendingUp, CheckCircle } from 'lucide-react';
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
-import { fetchSurvey, saveSurvey, submitSurveyResponse } from "../api/survey";
+import { fetchSurvey, submitSurveyResponse } from "../api/survey";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -247,22 +247,29 @@ const Profile: React.FC = () => {
 
   // ✅ New function to handle certificate download with survey
   const handleCertificateDownloadClick = async (eventId: string, userCode: string) => {
+    console.log("🔍 [Step 1] Certificate download triggered");
+    console.log("   → Event ID:", eventId);
+    console.log("   → User Code:", userCode);
     try {
       // Fetch survey for this event
       const surveyData = await fetchSurvey(eventId);
+      console.log("📊 [Step 2] Fetched survey data:", surveyData);
       
       if (surveyData && surveyData.isActive) {
+        console.log("✅ Survey exists and is active → showing modal");
         // Show survey modal
         setCurrentSurvey(surveyData);
         setPendingDownload({ eventId, userCode });
         setSurveyAnswers({});
         setShowSurveyModal(true);
       } else {
+        console.log("⚠️ No active survey → downloading certificate directly");
         // No survey, download directly
         await downloadCertificate(eventId, userCode);
       }
     } catch (error) {
-      console.error("❌ Error checking survey:", error);
+      console.error("❌ [Error] Failed to fetch survey:", error);
+      console.log("➡️ Proceeding to download certificate anyway...");
       // If survey fetch fails, allow download anyway
       await downloadCertificate(eventId, userCode);
     }
@@ -307,48 +314,81 @@ const Profile: React.FC = () => {
 
   // ✅ Handle survey submission
   const handleSurveySubmit = async () => {
-    if (!currentSurvey || !pendingDownload) return;
+    console.log("📤 [Step 3] Survey submission started");
+    if (!currentSurvey || !pendingDownload) {
+      console.error("❌ Missing currentSurvey or pendingDownload");
+      return;
+    }
 
-    // Validate all required questions are answered
-    const unansweredQuestions = currentSurvey.questions.filter((_, index) => {
-      const answer = surveyAnswers[index];
-      return !answer || (Array.isArray(answer) && answer.length === 0) || answer === '';
+    console.log("   → Current Survey ID:", currentSurvey._id);
+    console.log("   → Pending Download:", pendingDownload);
+    console.log("   → Answers:", surveyAnswers);
+
+    // Prepare answers array before logging
+    const answersArray = currentSurvey.questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      answer: surveyAnswers[index]
+    }));
+
+    console.log("📦 [Step 4] Submitting with:", {
+      eventId: pendingDownload.eventId,
+      surveyId: currentSurvey._id,
+      userCode: pendingDownload.userCode,
+      answers: answersArray
     });
 
-    if (unansweredQuestions.length > 0) {
+    console.log("✅ [Step 5] Survey submitted successfully!");
+    
+    // ตรวจสอบว่าตอบครบทุกข้อ
+    const unanswered = currentSurvey.questions.some((_, i) => {
+      const ans = surveyAnswers[i];
+      return !ans || (Array.isArray(ans) && ans.length === 0) || ans === '';
+    });
+    if (unanswered) {
       alert('กรุณาตอบคำถามให้ครบทุกข้อ');
+      return;
+    }
+
+    // ✅ ตรวจสอบว่ามี _id จริง
+    if (!currentSurvey._id) {
+      alert("ข้อมูลแบบสอบถามไม่สมบูรณ์ กรุณาลองใหม่");
       return;
     }
 
     try {
       setSurveySubmitting(true);
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
+      if (!token) throw new Error("No token");
 
-      // Format survey data
-      const surveyData = {
-        responses: currentSurvey.questions.map((q, index) => ({
-          question: q.question,
-          answer: surveyAnswers[index]
-        }))
-      };
+      // ✅ แปลงคำตอบให้ตรงกับ backend
+      const answersArray = currentSurvey.questions.map((q, index) => ({
+        questionIndex: index,
+        question: q.question,
+        answer: surveyAnswers[index]
+      }));
 
-      // Submit survey (Need to implement/change to submitSurveyResponse Hook)
-      await saveSurvey(pendingDownload.eventId, surveyData, token);
+      // ✅ ใช้ submitSurveyResponse แทน saveSurvey
+      await submitSurveyResponse(
+        pendingDownload.eventId,
+        currentSurvey._id,        // surveyId
+        answersArray,
+        pendingDownload.userCode, // userCode
+        token
+      );
 
-      // Close modal
+      // ปิด modal และดาวน์โหลด
       setShowSurveyModal(false);
-
-      // Download certificate
       await downloadCertificate(pendingDownload.eventId, pendingDownload.userCode);
-
-      // Reset state
+      
+      // รีเซ็ต state
       setCurrentSurvey(null);
       setPendingDownload(null);
       setSurveyAnswers({});
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Survey submission error:", error);
-      alert("เกิดข้อผิดพลาดในการส่งแบบสอบถาม");
+      const msg = error.response?.data?.message || "ส่งแบบสอบถามไม่สำเร็จ";
+      alert(msg);
     } finally {
       setSurveySubmitting(false);
     }

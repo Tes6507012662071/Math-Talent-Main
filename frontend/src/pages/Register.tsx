@@ -17,7 +17,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (form.password !== form.confirmPassword) {
-    alert("Password ไม่ตรงกัน");
+    alert("รหัสผ่าน ไม่ตรงกัน");
     return;
   }
 
@@ -43,21 +43,21 @@ const handleSubmit = async (e: React.FormEvent) => {
             onChange={handleChange}
           />
           <AuthFormInput
-            label="Email"
+            label="อีเมล"
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
           />
           <AuthFormInput
-            label="Password"
+            label="รหัสผ่าน"
             type="password"
             name="password"
             value={form.password}
             onChange={handleChange}
           />
           <AuthFormInput
-            label="ยืนยัน Password"
+            label="ยืนยัน รหัสผ่าน"
             type="password"
             name="confirmPassword"
             value={form.confirmPassword}

@@ -100,7 +100,7 @@ const Landing: React.FC = () => {
 
       {/* Events Section */}
       <div className="lg:text-center bg-gray-50 py-12">
-        <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">Events</h2>
+        <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">กิจกรรม</h2>
       </div>
 
       <section id="events" className="px-6 py-12 bg-white">

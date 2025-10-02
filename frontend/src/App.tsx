@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import EventPage from "./pages/EventPage";
 import EventDetail from "./pages/EventDetail";
 import Apply from "./pages/Apply";
 import Profile from "./pages/Profile";
@@ -19,6 +20,7 @@ const App: React.FC = () => {
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/events" element={<EventPage />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/about" element={<About />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />

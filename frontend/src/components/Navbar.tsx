@@ -84,17 +84,6 @@ const Navbar = () => {
           {/* Search + Buttons */}
           <div className="ml-auto flex items-center space-x-4">
             {/* Search Bar */}
-            <div className="hidden md:block relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-400">🔍</span>
-              </div>
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-60 px-10 py-1.5 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
             {/* Navigation Buttons */}
             {loading ? (
               <div className="text-gray-500">Loading...</div>
@@ -117,13 +106,13 @@ const Navbar = () => {
             ) : (
               <>
                 <a href="/login" className="text-gray-700 hover:text-blue-600">
-                  Sign In
+                  เข้าสู่ระบบ
                 </a>
                 <a
                   href="/register"
                   className="bg-[#003366] text-white px-4 py-2 rounded-lg hover:bg-[#000033] transition-colors duration-300 shadow-lg"
                 >
-                  Register
+                  ลงชื่อเข้าใช้
                 </a>
               </>
             )}
@@ -140,9 +129,9 @@ const Navbar = () => {
       {/* 🔽 แถบสีเต็มความกว้างหน้าเว็บ */}
       <div className="w-full bg-[#003366] py-3 px-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-center items-center gap-20 text-white font-medium flex-col md:flex-row text-center md:text-left">
-          <a href="/" className="hover:underline hover:text-gray-200 transition-colors">Home</a>
-          <a href="/events" className="hover:underline hover:text-gray-200 transition-colors">Event</a>
-          <a href="/about" className="hover:underline hover:text-gray-200 transition-colors">About</a>
+          <a href="/" className="hover:underline hover:text-gray-200 transition-colors">หน้าหลัก</a>
+          <a href="/events" className="hover:underline hover:text-gray-200 transition-colors">กิจกรรม</a>
+          <a href="/about" className="hover:underline hover:text-gray-200 transition-colors">เกี่ยวกับ</a>
         </div>
       </div>
     </>

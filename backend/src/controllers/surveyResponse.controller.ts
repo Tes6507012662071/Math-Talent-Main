@@ -5,10 +5,18 @@ import Survey from '../models/Survey';
 
 // Submit survey response
 export const submitSurveyResponse = async (req: Request, res: Response) => {
+  console.log("📥 Received survey submission:", {
+    eventId: req.params.eventId,
+    body: req.body
+  });
   try {
     const { eventId } = req.params;
     const { surveyId, answers, userCode } = req.body;
-    const userId = (req as any).user._id; // From auth middleware
+    // ✅ ใช้ req.user.id ตามที่ authMiddleware กำหนด
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "ไม่พบข้อมูลผู้ใช้ กรุณาล็อกอินใหม่" });
+    }
 
     // Verify survey exists
     const survey = await Survey.findById(surveyId);
