@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated" // ใช้ Path นี้ตามที่กำหนดไว้
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+// --- Enums ---
+
+enum Role {
+  user
+  admin
+}
+
+enum RegistrationType {
+  individual
+  school
+}
+
+enum IndividualStatus {
+  registered
+  slip_uploaded
+  verified
+  exam_ready
+  completed
+}
+
+enum QuestionType {
+  text
+  radio
+  checkbox
+}
+
+
+// --- Models ---
+
+// User Model
+model User {
+  id                      String                   @id @default(cuid())
+  name                    String
+  email                   String                   @unique
+  password                String
+  role                    Role                     @default(user)
+  
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  
+  individualRegistrations IndividualRegistration[]
+  surveyResponses         SurveyResponse[]
+}
+
+// Individual Registration Model (ตัวหลัก)
+model IndividualRegistration {
+  id             String           @id @default(cuid())
+  
+  fullname       String
+  grade          String
+  school         String
+  phone          String
+  email          String
+  
+  stationName    String
+  
+  userCode       String           @unique
+  adminCode      String
+  
+  status         IndividualStatus @default(registered)
+  
+  slipUrl        String?
+  certificateUrl String?
+  
+  // Relationships
+  event          Event            @relation(fields: [eventId], references: [id])
+  eventId        String           // Foreign Key
+  
+  user           User             @relation(fields: [userId], references: [id])
+  userId         String           // Foreign Key
+  
+  createdAt      DateTime         @default(now())
+}
+
+// Station Model
+model Station {
+  id            String   @id @default(cuid())
+  stationName   String
+  address       String
+  capacity      Int
+  code          Int
+
+  // Relationship
+  event         Event    @relation(fields: [eventId], references: [id])
+  eventId       String   // Foreign Key
+}
+
+// Event Model
+model Event {
+  id                      String                   @id @default(cuid())
+  nameEvent               String
+  detail                  String? @db.Text
+  dateAndTime             DateTime
+  location                String?
+  images                  String?
+  
+  registrationType        RegistrationType         @default(individual)
+  code                    String
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+
+  // Relationships
+  stations                Station[]
+  individualRegistrations IndividualRegistration[]
+  surveyResponses         SurveyResponse[]
+}
+
+// Survey Question Model
+model SurveyQuestion {
+  id       String         @id @default(cuid())
+  question String
+  type     QuestionType   @default(text)
+  options  Json           // แก้เป็น Json
+  
+  // Relationship
+  survey   Survey         @relation(fields: [surveyId], references: [id])
+  surveyId String         // Foreign Key
+}
+
+// Survey Model
+model Survey {
+  id              String           @id @default(cuid())
+  
+  eventId         String           @unique // Unique Constraint
+  
+  title           String           @default("แบบสอบถามหลังสอบ")
+  isActive        Boolean          @default(false)
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relationships
+  questions       SurveyQuestion[]
+  surveyResponses SurveyResponse[]
+}
+
+// Survey Answer Model
+model SurveyAnswer {
+  id              String         @id @default(cuid())
+  questionIndex   Int
+  question        String
+  answer          Json           // แก้เป็น Json
+
+  // Relationship
+  response        SurveyResponse @relation(fields: [responseId], references: [id])
+  responseId      String         // Foreign Key
+}
+
+// Survey Response Model
+model SurveyResponse {
+  id              String           @id @default(cuid())
+  userCode        String
+
+  // Relationships
+  survey          Survey           @relation(fields: [surveyId], references: [id])
+  surveyId        String           // Foreign Key
+
+  event           Event            @relation(fields: [eventId], references: [id])
+  eventId         String           // Foreign Key
+
+  user            User             @relation(fields: [userId], references: [id])
+  userId          String           // Foreign Key
+
+  // Relationship (Back)
+  answers         SurveyAnswer[]
+
+  // Timestamps
+  submittedAt     DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Composite Unique Index
+  @@unique([surveyId, userId])
+}
+
+// Certificate Model
+model Certificate {
+  id             String   @id @default(cuid())
+  userCode       String
+  eventId        String
+  certificateUrl String
+  uploadedAt     DateTime @default(now())
+  
+  // Composite Unique Index
+  @@unique([userCode, eventId])
+}
+
+// Counter Model
+model Counter {
+  id   String @id @default(cuid())
+  name String @unique
+  seq  Int    @default(0)
+}
+
+// Solution Model
+model Solution {
+  id         String   @id @default(cuid())
+  eventId    String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+}
+
+// Landing Content Model (Singleton)
+model LandingContent {
+  id             Int      @id @default(1)
+  historyTitle   String
+  historyContent String   @db.Text
+  objectiveTitle String
+  objectives     Json     // แก้เป็น Json
+}

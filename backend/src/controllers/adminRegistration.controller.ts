@@ -1,15 +1,27 @@
-// src/controllers/adminRegistration.controller.ts
+// backend/src/controllers/adminRegistration.controller.ts (เวอร์ชัน Prisma)
 import { Request, Response } from "express";
-import IndividualRegistration from "../models/IndividualRegistration";
+// 1. ❌ ลบ Mongoose Model ทิ้ง
+// import IndividualRegistration from "../models/IndividualRegistration";
+
+// 2. ✅ Import Prisma Client และ Enum ที่จำเป็น
+import prisma from '../utils/prisma';
+import { IndividualStatus } from '../generated/client';
 
 export const getAllRegistrations = async (req: Request, res: Response) => {
   try {
     console.log("[getAllRegistrations] fetching...");
-    const regs = await IndividualRegistration
-      .find({})
-      .populate("eventId", "name")
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 });
+    
+    // 3. ‼️ Mongoose: .find().populate().sort() -> Prisma: .findMany() + include + orderBy ‼️
+    const regs = await prisma.individualRegistration.findMany({
+      include: {
+        // ✅ เทียบเท่า .populate("eventId", "name")
+        event: { select: { id: true, nameEvent: true } }, 
+        // ✅ เทียบเท่า .populate("userId", "name email")
+        user: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    
     console.log("[getAllRegistrations] found:", regs.length);
     res.json(regs);
   } catch (err) {
@@ -20,9 +32,6 @@ export const getAllRegistrations = async (req: Request, res: Response) => {
 
 /**
  * อนุมัติ / ไม่อนุมัติสลิป
- * body: { action: "approve" | "reject", note?: string }
- * - approve  => status = "exam_ready"
- * - reject   => status = "registered" (หรือจะคง "slip_uploaded" ก็ได้ ปรับเอา)
  */
 export const verifySlip = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -34,29 +43,38 @@ export const verifySlip = async (req: Request, res: Response) => {
   }
 
   try {
-    const reg = await IndividualRegistration.findById(id);
+    // 4. ‼️ Mongoose: .findById() -> Prisma: .findUnique() ‼️
+    const reg = await prisma.individualRegistration.findUnique({
+      where: { id }
+    });
     if (!reg) return res.status(404).json({ message: "ไม่พบการสมัคร" });
 
-    // ตรวจว่ามีสลิปแล้วหรือยัง
+    // 5. ตรวจสอบเงื่อนไข (Logic เหมือนเดิม)
     if (!reg.slipUrl) {
       return res.status(400).json({ message: "ยังไม่มีสลิปให้ตรวจ" });
     }
+    // Note: การตรวจสอบสถานะเดิม ไม่จำเป็นใน Prisma เพราะ update จะทำตาม where
 
-    // ตรวจสถานะปัจจุบัน (ถ้าต้องการบังคับ workflow)
-    if (reg.status !== "slip_uploaded" && action === "approve") {
-      console.warn("[verifySlip] current status not slip_uploaded:", reg.status);
-      // ไม่บังคับก็ได้ แต่เตือน
+    // 6. ‼️ กำหนดสถานะใหม่ (ใช้ Enum) ‼️
+    let newStatus: IndividualStatus;
+    if (action === "approve") {
+      newStatus = IndividualStatus.exam_ready;
+    } else {
+      // action === "reject"
+      newStatus = IndividualStatus.registered; 
     }
 
-    let newStatus = reg.status;
-    if (action === "approve") newStatus = "exam_ready";
-    if (action === "reject") newStatus = "registered"; // หรือ "slip_uploaded" ถ้าต้องการให้ re-upload
-
-    reg.status = newStatus as any;
-
-    await reg.save();
-    console.log("[verifySlip] updated ->", reg._id, "status:", reg.status);
-    res.json(reg);
+    // 7. ‼️ Mongoose: reg.status = newStatus; await reg.save() -> Prisma: .update() ‼️
+    const updatedReg = await prisma.individualRegistration.update({
+      where: { id: reg.id },
+      data: {
+        status: newStatus,
+        // (ถ้าคุณต้องการเก็บ note การ Reject ใน database ควรมี field 'adminNote' ใน model)
+      },
+    });
+    
+    console.log("[verifySlip] updated ->", updatedReg.id, "status:", updatedReg.status);
+    res.json(updatedReg);
   } catch (err) {
     console.error("[verifySlip] error:", err);
     res.status(500).json({ message: "อัปเดตสถานะไม่สำเร็จ" });

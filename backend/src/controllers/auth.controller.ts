@@ -1,23 +1,31 @@
+// backend/src/controllers/auth.controller.ts (เวอร์ชัน Prisma)
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+// 1. ❌ ลบ Mongoose Model ทิ้ง
+// import User from "../models/User";
 
-// ✅ ลบ CustomRequest ออกทั้งหมด — ใช้ global type จาก src/types/express/index.d.ts
+// 2. ✅ Import Prisma Client เข้ามาแทน
+import prisma from '../utils/prisma'; 
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
   try {
-    const existing = await User.findOne({ email });
+    // 3. ‼️ Mongoose: .findOne({ email }) -> Prisma: .findUnique({ where: { email } }) ‼️
+    const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return res.status(400).json({ message: "Email is already in use" });
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashed });
+    
+    // 4. ‼️ Mongoose: .create() -> Prisma: .user.create() ‼️
+    const user = await prisma.user.create({
+      data: { name, email, password: hashed }
+    });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { // 5. ✅ user._id -> user.id
       expiresIn: "7d",
     });
 
@@ -33,12 +41,15 @@ export const loginUser = async (req: Request, res: Response) => {
   console.log("[Backend] Login request:", email);
 
   try {
-    const user = await User.findOne({ email });
+    // 6. ‼️ Mongoose: .findOne({ email }) -> Prisma: .findUnique({ where: { email } }) ‼️
+    const user = await prisma.user.findUnique({ where: { email } });
+    
     if (!user) {
       console.log("[Backend] User not found:", email);
       return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     }
 
+    // Logic เปรียบเทียบรหัสผ่าน (เหมือนเดิม)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log("[Backend] Password mismatch for user:", email);
@@ -46,7 +57,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user.id, role: user.role }, // 7. ✅ user._id -> user.id
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
@@ -56,7 +67,7 @@ export const loginUser = async (req: Request, res: Response) => {
     res.json({
       token,
       user: {
-        _id: user._id,
+        id: user.id, // 8. ✅ _id -> id
         name: user.name,
         email: user.email,
         role: user.role,
@@ -70,12 +81,24 @@ export const loginUser = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
-    // ✅ ตรวจสอบ req.user จาก global type
-    if (!req.user) {
+    // 9. ✅ req.user.id มาจาก authMiddleware (ซึ่งถูกแก้แล้ว)
+    const userId = (req as any).user?.id;
+    if (!userId) {
       return res.status(401).json({ message: "ไม่ได้รับสิทธิ์" });
     }
 
-    const user = await User.findById(req.user.id).select("-password");
+    // 10. ‼️ Mongoose: .findById().select('-password') -> Prisma: .findUnique() + select ‼️
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { // ✅ ไม่เอา password
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
     
     if (!user) {
       return res.status(404).json({ message: "ไม่พบผู้ใช้" });

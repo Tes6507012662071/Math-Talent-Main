@@ -1,24 +1,30 @@
-// backend/src/controllers/landing.controller.ts
+// backend/src/controllers/landing.controller.ts (เวอร์ชัน Prisma)
 import { Request, Response } from 'express';
-import LandingContent from '../models/LandingContent';
+// 1. ❌ ลบ Mongoose Model ทิ้ง
+// import LandingContent from '../models/LandingContent'; 
+// 2. ✅ Import Prisma Client เข้ามาแทน
+import prisma from '../utils/prisma'; 
 
 // ✅ ดึงข้อมูล Landing (สาธารณะ)
 export const getLandingContent = async (_req: Request, res: Response) => {
   try {
     console.log('🔍 GET /landing - Fetching landing content');
-    
-    // ✅ ตอนนี้ TypeScript รู้จัก getSingleton แล้ว
-    const landing = await LandingContent.getSingleton();
-    
-    const response = {
-      historyTitle: landing.historyTitle,
-      historyContent: landing.historyContent,
-      objectiveTitle: landing.objectiveTitle,
-      objectives: landing.objectives
-    };
-    
+
+    // 3. ‼️ เปลี่ยน Logic การดึงข้อมูล ‼️
+    // (เรา "รู้" ว่าข้อมูลอยู่ที่ id: 1 เสมอ จากไฟล์ seed.ts)
+    const landing = await prisma.landingContent.findUnique({
+      where: { id: 1 },
+    });
+
+    if (!landing) {
+      console.warn('❌ Landing content (id: 1) not found! Did the seed run?');
+      return res.status(404).json({ message: 'ไม่พบข้อมูล Landing' });
+    }
+
+    // 4. ✅ (ปรับปรุง) ส่งข้อมูลที่ได้จาก Prisma กลับไปตรงๆ ได้เลย
     console.log('✅ Landing content fetched successfully');
-    res.json(response);
+    res.json(landing);
+
   } catch (err) {
     console.error('❌ Error in getLandingContent:', err);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดขณะโหลดข้อมูล' });
@@ -28,31 +34,32 @@ export const getLandingContent = async (_req: Request, res: Response) => {
 // ✅ อัปเดตข้อมูล Landing (เฉพาะ admin)
 export const updateLandingContent = async (req: Request, res: Response) => {
   const { historyTitle, historyContent, objectiveTitle, objectives } = req.body;
-  
-  console.log('📝 PUT /landing - Update request from admin:', req.user?.id);
-  
-  // ตรวจสอบข้อมูลเบื้องต้น
+
+  console.log('📝 PUT /landing - Update request from admin');
+
+  // ตรวจสอบข้อมูลเบื้องต้น (เหมือนเดิม)
   if (!Array.isArray(objectives)) {
     console.warn('❌ Invalid objectives format - not an array');
     return res.status(400).json({ message: 'objectives ต้องเป็น array ของข้อความ' });
   }
 
   try {
-    const updated = await LandingContent.findOneAndUpdate(
-      {},
-      { historyTitle, historyContent, objectiveTitle, objectives },
-      { new: true, upsert: true }
-    );
+    // 5. ‼️ เปลี่ยน Logic การอัปเดต ‼️
+    // (ใช้ 'update' โดยระบุ id: 1 ตรงๆ)
+    const updated = await prisma.landingContent.update({
+      where: { id: 1 },
+      data: {
+        historyTitle,
+        historyContent,
+        objectiveTitle,
+        objectives, // Prisma (Json) รับ Array นี้ได้เลย
+      },
+    });
 
-    const response = {
-      historyTitle: updated.historyTitle,
-      historyContent: updated.historyContent,
-      objectiveTitle: updated.objectiveTitle,
-      objectives: updated.objectives
-    };
-
+    // 6. ✅ (ปรับปรุง) ส่งข้อมูลที่อัปเดตแล้วกลับไปตรงๆ
     console.log('✅ Landing content updated successfully');
-    res.json(response);
+    res.json(updated);
+
   } catch (err) {
     console.error('❌ Error in updateLandingContent:', err);
     res.status(500).json({ message: 'ไม่สามารถอัปเดตข้อมูลได้' });
