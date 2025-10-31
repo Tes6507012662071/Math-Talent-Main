@@ -8,7 +8,7 @@ const Navbar = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement | null>(null);
+
   
   const { user, isAuthenticated, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -17,7 +17,6 @@ const Navbar = () => {
     setOpenDropdown((prev) => (prev === key ? null : key));
   };
 
-  // ✅ ปิด dropdown เมื่อคลิกนอกกล่อง
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -71,7 +70,6 @@ const Navbar = () => {
     <>
       <nav className="bg-white text-[#1B3C53] shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 flex items-center h-16">
-          {/* Logo + Title */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
             <img
               src="/images/logo.jpg"
@@ -81,10 +79,7 @@ const Navbar = () => {
             <h1 className="text-xl font-bold">MATH TALENT FOUNDATION</h1>
           </div>
 
-          {/* Search + Buttons */}
           <div className="ml-auto flex items-center space-x-4">
-            {/* Search Bar */}
-            {/* Navigation Buttons */}
             {loading ? (
               <div className="text-gray-500">Loading...</div>
             ) : isAuthenticated && user ? (
@@ -100,7 +95,7 @@ const Navbar = () => {
                   onClick={handleLogout}
                   className="text-red-600 hover:text-red-800 ml-4 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
                 >
-                  Logout
+                  ออกจากระบบ
                 </button>
               </>
             ) : (
@@ -118,15 +113,10 @@ const Navbar = () => {
             )}
           </div>
         </div>
-        
-        {/* Dropdown Menus + Sidebar (เหมือนเดิม) */}
-        {/* ... */}
       </nav>
 
-      {/* Spacer */}
-      <div className="h-16" />
 
-      {/* 🔽 แถบสีเต็มความกว้างหน้าเว็บ */}
+      <div className="h-16" />
       <div className="w-full bg-[#003366] py-3 px-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-center items-center gap-20 text-white font-medium flex-col md:flex-row text-center md:text-left">
           <a href="/" className="hover:underline hover:text-gray-200 transition-colors">หน้าหลัก</a>

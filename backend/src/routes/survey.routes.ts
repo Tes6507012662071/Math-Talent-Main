@@ -4,11 +4,8 @@ import { protect, adminOnly } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Admin เท่านั้น - handle both POST and PUT for upsert operations
 router.post('/:eventId', protect, adminOnly, upsertSurvey);
 router.put('/:eventId', protect, adminOnly, upsertSurvey); 
-
-// สาธารณะ (สำหรับผู้ใช้กรอก)
 router.get('/:eventId', getSurveyByEvent);
 
 export default router;

@@ -9,7 +9,6 @@ const FaUserTie = FaUserTirRaw as React.ComponentType<React.SVGProps<SVGSVGEleme
 interface CommitteeMember {
   name: string;
   position: string;
-  //imageUrl?: string; // รองรับภาพในอนาคต
 }
 
 const previousCommittee: CommitteeMember[] = [
@@ -75,50 +74,4 @@ const About = () => {
     </div>
   );
 };
-
-
-/*const About: React.FC = () => {
-  const [teamMembers, setTeamMembers] = useState<
-    { id: number; name: string; role: string; image: string }[]
-  >([]);
-
-  useEffect(() => {
-    // Fetch team members data from an API or static file
-    const fetchTeamMembers = async () => {
-      // Mock data for demonstration
-      const members = [
-        { id: 1, name: 'John Doe', role: 'Founder', image: '/images/team1.jpg' },
-        { id: 2, name: 'Jane Smith', role: 'Developer', image: '/images/team2.jpg' },
-        { id: 3, name: 'Alice Johnson', role: 'Designer', image: '/images/team3.jpg' },
-      ];
-      setTeamMembers(members);
-    };
-
-    fetchTeamMembers();
-  }, []);
-
-  return (
-    <div>
-      <Navbar />
-      <section className="px-6 py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">เกี่ยวกับเรา</h1>
-          <p className="text-center text-lg text-gray-700 mb-6">
-            มูลนิธิส่งเสริมอัจฉริยภาพทางคณิตศาสตร์ก่อตั้งขึ้นเพื่อสนับสนุนและพัฒนาศักยภาพทางคณิตศาสตร์ของเยาวชนไทย
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teamMembers.map(member => (
-              <div key={member.id} className="bg-white p-4 rounded-lg shadow-md text-center">
-                <img src={member.image} alt={member.name} className="w-full h-40 object-cover rounded-t-lg" />
-                <h3 className="text-xl font-semibold mt-4">{member.name}</h3>
-                <p className="text-gray-500">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <Footer />
-    </div>
-  ); 
-};*/
 export default About;

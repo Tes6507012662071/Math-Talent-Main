@@ -41,15 +41,14 @@ export const createEvent = async (req: Request, res: Response) => {
       dateAndTime,
       location,
       registrationType,
-      stations, // (ยังเป็น JSON string)
-      levels    // ⬅️ 1. [เพิ่ม] รับค่า levels
+      stations, 
+      levels    
     } = req.body;
 
     if (!nameEvent || !dateAndTime) {
       return res.status(400).json({ success: false, message: "ต้องระบุชื่อเหตุการณ์และวันที่" });
     }
 
-    // --- (Logic การแปลง Stations) ---
     let parsedStations;
     try {
       parsedStations = JSON.parse(stations);
@@ -60,9 +59,8 @@ export const createEvent = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "ต้องมีอย่างน้อย 1 ศูนย์สอบ" });
     }
 
-    // --- ‼️ 2. [เพิ่ม] Logic การแปลง Levels ‼️ ---
-    let parsedLevels = []; // (ค่าเริ่มต้นเป็น Array ว่าง)
-    if (levels) { // (เช็กว่ามีส่งมาไหม)
+    let parsedLevels = []; 
+    if (levels) { 
         try {
             parsedLevels = JSON.parse(levels);
             if (!Array.isArray(parsedLevels)) {
@@ -72,14 +70,12 @@ export const createEvent = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "รูปแบบ Levels (JSON) ไม่ถูกต้อง" });
         }
     }
-    // --- จบ Logic Levels ---
 
     let imageUrl = '';
     if (req.file) {
       imageUrl = `/api-images/events/${req.file.filename}`;
     }
 
-    // --- (Logic การสร้าง Code) ---
     const counter = await prisma.counter.upsert({
       where: { name: 'eventId' },
       update: { seq: { increment: 1 } },
@@ -90,9 +86,7 @@ export const createEvent = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "ถึงขีดจำกัดรหัสกิจกรรม (99)" });
     }
     const code = String(nextCode).padStart(2, "0");
-    // --- (Logic การสร้าง Code) ---
 
-    // 6. ‼️ Mongoose: new Event().save() -> Prisma: .event.create() ‼️
     const newEvent = await prisma.event.create({
       data: {
         nameEvent,
@@ -102,8 +96,7 @@ export const createEvent = async (req: Request, res: Response) => {
         location,
         images: imageUrl,
         registrationType: registrationType as RegistrationType,
-        
-        levels: parsedLevels, // ⬅️ 3. [เพิ่ม] บันทึก levels
+        levels: parsedLevels, 
 
         stations: {
           createMany: {
@@ -140,7 +133,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       location,
       registrationType,
       stations,
-      levels // ⬅️ 1. [เพิ่ม] รับค่า levels
+      levels 
     } = req.body;
 
     const existingEvent = await prisma.event.findUnique({ where: { id } });
@@ -148,7 +141,6 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "ไม่พบกิจกรรมนี้" });
     }
 
-    // 9. สร้าง updateData
     const updateData: any = {
       nameEvent,
       detail,
@@ -161,21 +153,18 @@ export const updateEvent = async (req: Request, res: Response) => {
       updateData.images = `/api-images/events/${req.file.filename}`;
     }
 
-    // --- ‼️ 2. [เพิ่ม] Logic การอัปเดต Levels ‼️ ---
-    if (levels) { // (ถ้ามีส่ง levels มาให้อัปเดต)
+    if (levels) { 
       try {
         const parsedLevels = JSON.parse(levels);
         if (!Array.isArray(parsedLevels)) {
            return res.status(400).json({ success: false, message: "รูปแบบ Levels ต้องเป็น Array" });
         }
-        updateData.levels = parsedLevels; // ⬅️ เพิ่ม levels เข้าไปใน data ที่จะอัปเดต
+        updateData.levels = parsedLevels;
       } catch (e) {
         return res.status(400).json({ success: false, message: "รูปแบบ Levels (JSON) ไม่ถูกต้อง" });
       }
     }
-    // --- จบ Logic Levels ---
 
-    // 10. (สำคัญ) อัปเดต Stations (ถ้ามีส่งมา)
     if (stations) {
       try {
         const parsedStations = JSON.parse(stations);
@@ -184,8 +173,8 @@ export const updateEvent = async (req: Request, res: Response) => {
         }
         
         updateData.stations = {
-          deleteMany: {}, // ลบ Stations เก่าทั้งหมด
-          createMany: {   // สร้าง Stations ใหม่ทั้งหมด
+          deleteMany: {}, 
+          createMany: {   
             data: parsedStations.map((station: any) => ({
               stationName: station.stationName,
               address: station.address,

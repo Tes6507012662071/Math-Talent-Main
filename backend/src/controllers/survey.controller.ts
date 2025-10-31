@@ -1,9 +1,8 @@
-// backend/src/controllers/survey.controller.ts
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { Prisma } from '../generated/client'; // Import Prisma module for Error Code and JsonValue Type
+import { Prisma } from '../generated/client'; 
 
-// สร้าง/อัปเดต survey สำหรับ event
+
 export const upsertSurvey = async (req: Request, res: Response) => {
   const { eventId } = req.params;
   const { title, questions, isActive } = req.body;
@@ -17,23 +16,20 @@ export const upsertSurvey = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'ต้องมีอย่างน้อย 1 คำถาม' });
     }
     
-    // Helper function สำหรับการแปลง Array/null ให้เป็น Prisma.InputJsonValue ที่ถูกต้อง
     const mapQuestionsToPrismaData = (q: any) => ({
       question: q.question,
       type: q.type,
-      // ✅ แก้ Final Type Error: ใช้ Prisma.JsonNull สำหรับค่าที่เป็น null และ Prisma.InputJsonValue สำหรับค่าที่ไม่ใช่ null
       options: q.options !== undefined && q.options !== null
         ? q.options as Prisma.InputJsonValue
         : Prisma.JsonNull
     });
     
-    // ‼️ LOGIC: Prisma .upsert() พร้อม Nested Write ‼️
+
     const survey = await prisma.survey.upsert({
       where: { eventId: eventId },
       update: { 
         title, 
         isActive, 
-        // 4. ✅ แก้ปัญหา: ลบของเก่าทิ้งแล้วสร้างใหม่ (Nested Update/Delete)
         questions: {
           deleteMany: {}, 
           createMany: {
@@ -45,7 +41,6 @@ export const upsertSurvey = async (req: Request, res: Response) => {
         eventId,
         title, 
         isActive,
-        // 6. ✅ สร้างพร้อมกับ Questions (Nested Create)
         questions: {
           createMany: {
             data: questions.map(mapQuestionsToPrismaData)
@@ -64,7 +59,6 @@ export const upsertSurvey = async (req: Request, res: Response) => {
   }
 };
 
-// ดึง survey สำหรับ event
 export const getSurveyByEvent = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
@@ -74,7 +68,6 @@ export const getSurveyByEvent = async (req: Request, res: Response) => {
         eventId: eventId, 
         isActive: true
       },
-      // ✅ ต้อง Include Questions มาด้วยเพื่อให้ Frontend เห็น
       include: {
           questions: true
       }

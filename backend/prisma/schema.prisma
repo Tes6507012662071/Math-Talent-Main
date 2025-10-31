@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated" // ใช้ Path นี้ตามที่กำหนดไว้
+  output   = "../src/generated" 
 }
 
 datasource db {
@@ -59,7 +59,7 @@ model User {
   surveyResponses         SurveyResponse[]
 }
 
-// Individual Registration Model (ตัวหลัก)
+// Individual Registration Model 
 model IndividualRegistration {
   id             String           @id @default(cuid())
   
@@ -131,7 +131,7 @@ model SurveyQuestion {
   id       String         @id @default(cuid())
   question String
   type     QuestionType   @default(text)
-  options  Json           // แก้เป็น Json
+  options  Json           
   
   // Relationship
   survey   Survey         @relation(fields: [surveyId], references: [id])
@@ -142,7 +142,7 @@ model SurveyQuestion {
 model Survey {
   id              String           @id @default(cuid())
   
-  eventId         String           @unique // Unique Constraint
+  eventId         String           @unique 
   
   title           String           @default("แบบสอบถามหลังสอบ")
   isActive        Boolean          @default(false)
@@ -160,7 +160,7 @@ model SurveyAnswer {
   id              String         @id @default(cuid())
   questionIndex   Int
   question        String
-  answer          Json           // แก้เป็น Json
+  answer          Json           
 
   // Relationship
   response        SurveyResponse @relation(fields: [responseId], references: [id])
@@ -227,5 +227,5 @@ model LandingContent {
   historyTitle   String
   historyContent String   @db.Text
   objectiveTitle String
-  objectives     Json     // แก้เป็น Json
+  objectives     Json     
 }

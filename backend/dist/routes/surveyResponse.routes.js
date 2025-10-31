@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const surveyResponse_controller_1 = require("../controllers/surveyResponse.controller");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const router = (0, express_1.Router)();
+router.post('/:eventId/submit', authMiddleware_1.protect, surveyResponse_controller_1.submitSurveyResponse);
+router.get('/:surveyId/check', authMiddleware_1.protect, surveyResponse_controller_1.checkSurveyResponse);
+router.get('/:surveyId/responses', authMiddleware_1.protect, authMiddleware_1.adminOnly, surveyResponse_controller_1.getSurveyResponses);
+exports.default = router;

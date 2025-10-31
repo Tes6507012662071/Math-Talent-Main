@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-// (Import Icons ที่ถูกต้องสำหรับ Stations)
 import { FaCalendarAlt as FaCalendarAltRaw } from "react-icons/fa";
 import { FaMapMarkerAlt as FaMapMarkerAltRaw } from "react-icons/fa";
 import { FaUserFriends as FaUsersRaw } from "react-icons/fa"; 
@@ -9,16 +8,12 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import EventCard from "../components/EventCard";
 import { fetchEvents } from "../api/events";
-// (Import Type ที่ถูกต้อง)
 import { Event as EventType, Station } from "../types/event";
 
-// Icon Type Casting
 const FaCalendarAlt = FaCalendarAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaMapMarkerAlt = FaMapMarkerAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaUsers = FaUsersRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaHashtag = FaHashtagRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
-
-// (ใช้ REACT_APP_API_URL - ไม่มี /api)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const EventDetail: React.FC = () => {
@@ -65,22 +60,10 @@ const EventDetail: React.FC = () => {
     else { navigate(`/apply/${id}`); }
   };
   
-  {/*const formatDate = (dateString: string) => {
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return "Invalid Date";
-        return date.toLocaleDateString('th-TH', {
-          year: 'numeric', month: 'long', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        });
-    } catch (e) { return "Invalid Date"; }
-  };*/}
-
   if (loading) return <div className="text-center p-8">กำลังโหลดข้อมูลกิจกรรม...</div>;
   if (error) return <div className="text-center p-8 text-red-600">ผิดพลาด: {error}</div>;
   if (!event) return <div className="text-center p-8">ไม่พบกิจกรรม</div>;
 
-  // สร้าง imageUrl เต็ม
   const imageUrl = event.images
     ? `${API_BASE_URL}${event.images}`
     : undefined;
@@ -89,26 +72,19 @@ const EventDetail: React.FC = () => {
     <div>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-
-        {/* --- Layout ซ้าย-ขวา --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start mb-10 md:mb-16">
-          
-          {/* --- คอลัมน์ซ้าย (ข้อความ) --- */}
           <div className="prose prose-lg max-w-none">
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{event.nameEvent}</h1>
-            {/* --- ใช้ 'whitespace-pre-wrap' เพื่อให้ย่อหน้าถูกต้อง --- */}
             <p className="text-gray-700 whitespace-pre-wrap">
               {event.detail || "ไม่มีรายละเอียด"}
             </p>
           </div>
 
-          {/* --- คอลัมน์ขวา (รูปภาพ) --- */}
           <div>
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={event.nameEvent}
-                // --- ‼️ [แก้ไข] ลบ 'aspect-video' และ 'bg-gray-100' ออก ---
                 className="rounded-lg shadow-lg w-full h-auto object-contain" 
                 onError={(e) => {
                     (e.target as HTMLImageElement).parentElement?.classList.add('hidden');
@@ -122,7 +98,6 @@ const EventDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* --- (ส่วนศูนย์สอบ (Stations) และปุ่ม (Button) เหมือนเดิม) --- */}
         {event.stations && event.stations.length > 0 ? (
           <>
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-2">ศูนย์สอบ</h2>
@@ -169,7 +144,6 @@ const EventDetail: React.FC = () => {
             </button>
         </div>
 
-        {/* Related Events Section */}
         <div className="mt-20 pt-10 border-t">
           <h2 className="text-2xl font-semibold text-center text-gray-800 mb-8">
             กิจกรรมอื่น ๆ ที่น่าสนใจ

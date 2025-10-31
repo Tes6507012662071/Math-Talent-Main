@@ -16,7 +16,6 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -27,7 +26,6 @@ const App: React.FC = () => {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/solution" element={<SolutionPage />} />
         
-        {/* Protected Routes */}
         <Route 
           path="/apply/:eventId" 
           element={

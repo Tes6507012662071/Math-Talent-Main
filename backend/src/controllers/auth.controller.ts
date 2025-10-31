@@ -1,11 +1,9 @@
-// backend/src/controllers/auth.controller.ts (ฉบับแก้ไข Error TS2339)
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from '../utils/prisma'; 
-import { Prisma } from '../generated/client'; // Import Prisma (สำหรับดัก Error)
+import { Prisma } from '../generated/client'; 
 
-// (register - เหมือนเดิม)
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
   try {
@@ -27,7 +25,6 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// (loginUser - เหมือนเดิม)
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   console.log("[Backend] Login request:", email);
@@ -63,7 +60,6 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-// (getCurrentUser - เหมือนเดิม)
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
@@ -94,7 +90,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-// (updateUserProfile - แก้ไขการตรวจสอบ Error)
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
@@ -121,19 +116,16 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   } catch (err: any) {
      console.error("updateUserProfile error:", err);
      
-     // --- ‼️ [แก้ไข] ‼️ ---
-     // (เพิ่ม Array.isArray() เพื่อตรวจสอบ Type ก่อนเรียก .includes())
      if (
         err instanceof Prisma.PrismaClientKnownRequestError && 
         err.code === 'P2002' && 
-        err.meta && // 👈 [1] เช็กว่า meta ไม่ใช่ null
-        Array.isArray(err.meta.target) && // 👈 [2] ตรวจสอบว่าเป็น Array
-        err.meta.target.includes('email') // 👈 [3] ตอนนี้ .includes() ปลอดภัยแล้ว
+        err.meta && 
+        Array.isArray(err.meta.target) && 
+        err.meta.target.includes('email') 
      ) {
          return res.status(400).json({ message: "อีเมลนี้ถูกใช้ไปแล้ว" });
      }
-     // ---
-     
+  
     res.status(500).json({ message: "Update profile failed" });
   }
 };

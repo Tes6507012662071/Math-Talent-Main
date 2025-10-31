@@ -1,5 +1,3 @@
-// src/api/auth.ts
-
 const API_URL = "http://localhost:5000/api";
 
 export const loginUser = async (email: string, password: string) => {
@@ -18,7 +16,7 @@ export const loginUser = async (email: string, password: string) => {
   
   console.log("📌 Login successful, received token");
 
-  return response.json(); // { token: "...", user: {...} }
+  return response.json();
 };
 
 export const registerUser = async (name: string, email: string, password: string) => {
@@ -35,7 +33,7 @@ export const registerUser = async (name: string, email: string, password: string
     throw new Error(error.message || "สมัครสมาชิกไม่สำเร็จ");
   }
 
-  return response.json(); // { message: "Registered successfully" }
+  return response.json();
 };
 
 export const fetchUserProfile = async (token: string) => {
@@ -52,7 +50,7 @@ export const fetchUserProfile = async (token: string) => {
     throw new Error("โหลดโปรไฟล์ไม่สำเร็จ");
   }
 
-  return response.json(); // { _id, name, email, ... }
+  return response.json();
 };
 
 export const validateToken = async (token: string): Promise<boolean> => {

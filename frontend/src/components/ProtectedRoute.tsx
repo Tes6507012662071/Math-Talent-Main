@@ -10,7 +10,7 @@ const ProtectedRoute: React.FC<Props> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>; // Or your loading component
+    return <div>Loading...</div>;
   }
 
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;

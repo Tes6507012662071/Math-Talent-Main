@@ -1,10 +1,8 @@
-// backend/src/controllers/export.controller.ts (ฉบับอัปเดต)
 import { Request, Response } from "express";
 import prisma from '../utils/prisma';
 import * as XLSX from "xlsx";
-import { Prisma } from '../generated/client'; // Import Type
+import { Prisma } from '../generated/client'; 
 
-// --- (ฟังก์ชันเดิม สำหรับ Export Survey) ---
 export const exportSurveyResponses = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
@@ -58,16 +56,14 @@ export const exportSurveyResponses = async (req: Request, res: Response) => {
   }
 };
 
-// --- ‼️ [เพิ่มใหม่] ฟังก์ชันสำหรับ Export รายชื่อผู้สมัคร ‼️ ---
 export const exportApplicants = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
 
-    // 1. ดึงข้อมูลผู้สมัครทั้งหมดสำหรับ Event นี้
     const applicants = await prisma.individualRegistration.findMany({
       where: { eventId: eventId },
       orderBy: {
-        createdAt: 'asc' // เรียงตามลำดับการสมัคร
+        createdAt: 'asc' 
       }
     });
 
@@ -75,7 +71,6 @@ export const exportApplicants = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "ไม่พบผู้สมัครสำหรับ Event นี้" });
     }
 
-    // 2. แปลงข้อมูล (เลือกเฉพาะ Field ที่ต้องการ)
     const exportData = applicants.map(app => ({
       'รหัสผู้สมัคร (User Code)': app.userCode,
       'รหัสแอดมิน (Admin Code)': app.adminCode,
@@ -89,12 +84,11 @@ export const exportApplicants = async (req: Request, res: Response) => {
       'วันที่สมัคร': app.createdAt.toLocaleString('th-TH')
     }));
 
-    // 3. สร้าง Excel
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Applicants");
     
-    // 4. ส่งไฟล์กลับไป
+    
     const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
     
     res.setHeader(

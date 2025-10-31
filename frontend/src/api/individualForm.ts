@@ -1,6 +1,5 @@
 const API_URL = "http://localhost:5000/api";
 
-// ฟังก์ชันส่งข้อมูลแบบฟอร์มบุคคลธรรมดา (Individual)
 export const submitIndividualForm = async (token: string, data: any) => {
     const response = await fetch(`${API_URL}/individual-registration`, {
         method: "POST",
@@ -18,5 +17,3 @@ export const submitIndividualForm = async (token: string, data: any) => {
 
     return await response.json();
 };
-
-// ถ้ามี API อื่นๆสำหรับ IndividualForm ก็เพิ่มได้ที่นี่

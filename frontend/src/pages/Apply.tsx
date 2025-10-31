@@ -2,19 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { submitIndividualForm } from "../api/individualForm";
 import { getEventById } from "../api/events";
-import { Event } from "../types/event"; // ✅ (ต้องมั่นใจว่า Event type ใน /types/event.ts มี levels?: string[] แล้ว)
-import Navbar from "../components/Navbar"; // (Import Navbar)
-import Footer from "../components/Footer"; // (Import Footer)
+import { Event } from "../types/event";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
-// 1. ‼️ [แก้ไข] ลบ 'note' ออกจาก FormValues ‼️
 interface FormValues {
   fullname: string;
   grade: string;
   school: string;
-  station: string; // ชื่อศูนย์สอบ
+  station: string;
   phone: string;
   email: string;
-  // note: string; // (ลบออก)
 }
 
 const Apply: React.FC = () => {
@@ -24,7 +22,6 @@ const Apply: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 2. ‼️ [แก้ไข] ลบ 'note' ออกจาก State ‼️
   const [form, setForm] = useState<FormValues>({
     fullname: "",
     grade: "",
@@ -32,7 +29,6 @@ const Apply: React.FC = () => {
     station: "",
     phone: "",
     email: "",
-    // note: "", // (ลบออก)
   });
 
   useEffect(() => {
@@ -44,7 +40,6 @@ const Apply: React.FC = () => {
 
     const loadEvent = async () => {
       try {
-        // (เราจะใช้ getEventById ที่แก้ไขแล้วใน api/events.ts)
         const eventData = await getEventById(eventId); 
         setEvent(eventData);
       } catch (err) {
@@ -71,7 +66,6 @@ const Apply: React.FC = () => {
     }
 
     try {
-      // 3. ‼️ (ยืนยัน) ...form จะไม่มี 'note' ส่งไปด้วยโดยอัตโนมัติ ‼️
       await submitIndividualForm(token, { eventId: eventId!, ...form });
       alert("สมัครสำเร็จ!");
       navigate(`/events/${eventId}`);
@@ -96,7 +90,7 @@ const Apply: React.FC = () => {
 
   return (
     <>
-      <Navbar /> {/* (เพิ่ม Navbar) */}
+      <Navbar />
       <div className="max-w-3xl mx-auto px-6 py-10">
         <h1 className="text-2xl font-bold mb-6">สมัครสอบกิจกรรม: {event.nameEvent}</h1>
 
@@ -111,7 +105,6 @@ const Apply: React.FC = () => {
             />
           </div>
 
-          {/* --- 4. ‼️ [แก้ไข] เปลี่ยน <select> ระดับชั้น --- */}
           <div>
             <label className="block mb-1 font-medium">ระดับชั้น</label>
             <select
@@ -122,7 +115,6 @@ const Apply: React.FC = () => {
               required
             >
               <option value="">-- เลือกระดับชั้น --</option>
-              {/* (Map ข้อมูลจาก event.levels) */}
               {(event.levels || []).map((level: string, index: number) => (
                 <option key={index} value={level}>
                   {level}
@@ -130,7 +122,6 @@ const Apply: React.FC = () => {
               ))}
             </select>
           </div>
-          {/* --- จบส่วนแก้ไข --- */}
 
           <div>
             <label className="block mb-1 font-medium">โรงเรียน</label>
@@ -174,20 +165,6 @@ const Apply: React.FC = () => {
             />
           </div>
 
-          {/* --- 5. ‼️ [แก้ไข] ลบ <textarea> หมายเหตุเพิ่มเติม --- */}
-          {/* <div>
-            <label className="block mb-1 font-medium">หมายเหตุเพิ่มเติม</label>
-            <textarea
-              name="note"
-              value={form.note}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              rows={3}
-            />
-          </div>
-          */}
-          {/* --- จบส่วนลบ --- */}
-
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
@@ -196,7 +173,7 @@ const Apply: React.FC = () => {
           </button>
         </form>
       </div>
-      <Footer /> {/* (เพิ่ม Footer) */}
+      <Footer />
     </>
   );
 };

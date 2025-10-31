@@ -63,7 +63,6 @@ const EventPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       
-      {/* This div will grow to fill available space */}
       <div className="flex-grow">
         <div className="bg-white shadow-md rounded-xl p-8 flex flex-col items-center justify-center py-12 px-4 text-center">
           <div className="mb-8">
@@ -71,7 +70,6 @@ const EventPage: React.FC = () => {
             <p className="text-gray-600">ค้นหาและสมัครเข้าร่วมการแข่งขันคณิตศาสตร์และกิจกรรมต่างๆ</p>
           </div>
 
-          {/* Filter Buttons */}
           <div className="mb-8 flex flex-wrap gap-3">
             <button
               onClick={() => setFilter('all')}
@@ -105,7 +103,6 @@ const EventPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Events Grid */}
           {filteredEvents.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">ไม่พบกิจกรรม</p>

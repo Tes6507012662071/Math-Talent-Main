@@ -7,7 +7,6 @@ interface Props {
   event: Event;
 }
 
-// ✅ ดึง Base URL (ต้องมั่นใจว่า .env.local ถูกต้อง)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const EventCard: React.FC<Props> = ({ event }) => {
@@ -16,7 +15,6 @@ const EventCard: React.FC<Props> = ({ event }) => {
 
   const handleRegisterClick = () => {
     if (isAuthenticated) {
-      // ‼️ แก้ไข: ใช้ event.id ‼️
       navigate(`/apply/${event.id}`);
     } else {
       navigate("/login");
@@ -34,18 +32,16 @@ const EventCard: React.FC<Props> = ({ event }) => {
     } catch (e) { return "Invalid Date"; }
   };
 
-  // ✅ สร้าง URL เต็มสำหรับรูปภาพ
   const imageUrl = event.images
-    ? `${API_BASE_URL}${event.images}` // (เช่น http://localhost:5000/api-images/events/...)
+    ? `${API_BASE_URL}${event.images}` 
     : undefined;
 
   return (
     <div className="border rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
-      {/* รูปภาพด้านบน */}
       {imageUrl ? (
         <div className="h-48 w-full overflow-hidden">
           <img
-            src={imageUrl} // ✅ ใช้ imageUrl
+            src={imageUrl}
             alt={event.nameEvent}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -59,9 +55,8 @@ const EventCard: React.FC<Props> = ({ event }) => {
         </div>
       )}
 
-      {/* ข้อมูลด้านล่าง */}
+
       <div className="p-4">
-        {/* ✅ ใช้ event.nameEvent */}
         <h3 className="text-lg font-semibold mb-2">{event.nameEvent}</h3>
         
         <p className="text-sm text-gray-600 mb-3">
@@ -69,7 +64,6 @@ const EventCard: React.FC<Props> = ({ event }) => {
         </p>
 
         <div className="flex justify-between items-center mt-4">
-          {/* ‼️ แก้ไข: ใช้ event.id ‼️ */}
           <a href={`/events/${event.id}`} className="text-blue-600 hover:underline text-sm">
             ดูรายละเอียด
           </a>

@@ -40,7 +40,6 @@ const Landing: React.FC = () => {
     loadData();
   }, []);
 
-  // Debug: ดูค่า state ปัจจุบัน
   console.log("📊 State ปัจจุบัน:", { loading, error, landing, events });
 
   if (loading) {
@@ -63,8 +62,6 @@ const Landing: React.FC = () => {
   return (
     <div>
       <Navbar />
-      
-      {/* About Section */}
       <section id="about" className="px-6 py-12 bg-gray-50 relative">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
           <div className="flex flex-col-reverse lg:flex-row items-center lg:items-start gap-20">
@@ -98,7 +95,6 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Events Section */}
       <div className="lg:text-center bg-gray-50 py-12">
         <h2 className="text-3xl text-[#003366] font-semibold tracking-wide uppercase">กิจกรรม</h2>
       </div>

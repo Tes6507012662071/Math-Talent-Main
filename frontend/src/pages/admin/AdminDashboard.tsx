@@ -5,7 +5,6 @@ import Footer from "../../components/Footer";
 import axios from "axios";
 import { fetchLandingContent, updateLandingContent, LandingData } from '../../api/landing';
 
-// (API_BASE_URL, Interfaces, ... เหมือนเดิม)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 interface Applicant {
@@ -38,7 +37,6 @@ interface Event {
 
 
 const AdminDashboard: React.FC = () => {
-  // ... (States ทั้งหมดเหมือนเดิม) ...
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("checkSlip");
   const [selectedEventUploadPDF, setSelectedEventUploadPDF] = useState("");
@@ -89,10 +87,6 @@ const AdminDashboard: React.FC = () => {
   ]);
   const [surveyActive, setSurveyActive] = useState(false);
   const [editStatus, setEditStatus] = useState("");
-
-  // ... (ฟังก์ชัน Handlers ทั้งหมด: Survey, saveSurvey, loadEventData, fetchEvents, ...)
-  // ( ... โค้ดส่วน Handlers ... )
-  // --- Survey Question Handlers ---
   const addQuestionToAdd = () => setAddQuestions([...addQuestions, { question: "", type: "text" }]);
   const removeQuestionFromAdd = (index: number) => setAddQuestions(addQuestions.filter((_, i) => i !== index));
   const updateAddQuestion = (index: number, field: string, value: any) => {
@@ -108,7 +102,6 @@ const AdminDashboard: React.FC = () => {
     setQuestions(newQuestions);
   };
 
-  // Helper function to save survey (Upsert logic)
   const saveSurvey = async (eventId: string, surveyData: any, token: string) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/survey/${eventId}`, surveyData, {
@@ -134,7 +127,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Load event data for editing
   useEffect(() => {
     if (!selectedEventId) return;
     const loadEventData = async () => {
@@ -176,7 +168,6 @@ const AdminDashboard: React.FC = () => {
     loadEventData();
   }, [selectedEventId]);
 
-  // Fetch all events for dropdowns
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -191,7 +182,6 @@ const AdminDashboard: React.FC = () => {
     fetchEvents();
   }, []);
 
-  // Fetch landing content when needed
   useEffect(() => {
     if (selectedTopic !== "editLanding") return;
     const loadLanding = async () => {
@@ -203,7 +193,6 @@ const AdminDashboard: React.FC = () => {
     loadLanding();
   }, [selectedTopic]);
 
-  // Fetch applicants for Check Slip
   useEffect(() => {
     if (!selectedEventCheckSlip) return;
     const fetchApplicants = async () => {
@@ -219,7 +208,6 @@ const AdminDashboard: React.FC = () => {
     fetchApplicants();
   }, [selectedEventCheckSlip]);
 
-  // Update applicant status
   const handleUpdateStatusToExamReady = async (applicantId: string) => {
     try {
       const token = localStorage.getItem("token"); if (!token) return;
@@ -232,7 +220,6 @@ const AdminDashboard: React.FC = () => {
     } catch (err) { console.error("❌ Update status error:", err); alert("อัปเดตสถานะไม่สำเร็จ"); }
   };
 
-  // --- Handlers for uploads ---
   const handleSolutionFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files) setSolutionFile(e.target.files[0]); };
   const handleSolutionUpload = async () => {
     if (!selectedEventUploadPDF) return alert("กรุณาเลือกกิจกรรม");
@@ -291,7 +278,6 @@ const AdminDashboard: React.FC = () => {
     } catch (error) { console.error("❌ Certificate upload error:", error); setCertificateUploadStatus("❌ อัปโหลดล้มเหลว"); }
   };
 
-  // --- Landing Edit Handlers ---
   const handleLandingChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { const { name, value } = e.target; setLandingData(prev => ({ ...prev, [name]: value })); };
   const handleObjectiveChange = (index: number, value: string) => { const newObjectives = [...landingData.objectives]; newObjectives[index] = value; setLandingData(prev => ({ ...prev, objectives: newObjectives })); };
   const addObjective = () => { setLandingData(prev => ({ ...prev, objectives: [...prev.objectives, ''] })); };
@@ -302,7 +288,6 @@ const AdminDashboard: React.FC = () => {
     finally { setSavingLanding(false); }
   };
 
-  // --- Auth check ---
   useEffect(() => {
     const storedUser = localStorage.getItem("user"); if (!storedUser) { navigate("/login"); return; }
     try { const user = JSON.parse(storedUser); if (user.role !== "admin") navigate("/landing"); }
@@ -317,7 +302,6 @@ const AdminDashboard: React.FC = () => {
     finally { setLoadingCertificates(false); }
   };
 
- // --- Add Event Handlers ---
   const handleAddEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => { const { name, value } = e.target; setAddEventForm(prev => ({ ...prev, [name]: value })); };
   const handleStationChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target; const newStations = [...addEventForm.stations];
@@ -383,7 +367,6 @@ const AdminDashboard: React.FC = () => {
    } catch (err: any) { console.error("บันทึกล้มเหลว:", err); const msg = err.response?.data?.message || err.message || "ไม่ทราบสาเหตุ"; setEditStatus(`❌ บันทึกล้มเหลว: ${msg}`); }
  };
 
-  // --- Render content ---
   const renderContent = () => {
     switch (selectedTopic) {
       case "uploadPDF":
@@ -402,7 +385,6 @@ const AdminDashboard: React.FC = () => {
 
       case "checkSlip":
         const pendingApplicants = applicants.filter(app => app.status === "slip_uploaded");
-        // ‼️ [แก้ไข] Filter เอา 'completed' ออก ‼️
         const approvedApplicants = applicants.filter(app => app.status === "exam_ready");
         return (
           <section>
@@ -412,7 +394,6 @@ const AdminDashboard: React.FC = () => {
               {events.map((ev) => ( <option key={ev.id} value={ev.id}>{ev.nameEvent}</option> ))}
             </select>
 
-            {/* --- ‼️ [เพิ่มใหม่] ปุ่ม Export รายชื่อ --- */}
             {selectedEventCheckSlip && (
               <button
                 type="button"
@@ -446,7 +427,6 @@ const AdminDashboard: React.FC = () => {
                 📤 Export รายชื่อ (Excel)
               </button>
             )}
-            {/* --- จบส่วนปุ่ม Export --- */}
 
             {selectedEventCheckSlip && (applicants.length > 0 || pendingApplicants.length > 0) ? (
               <>
@@ -614,7 +594,6 @@ const AdminDashboard: React.FC = () => {
               <div><label className="block mb-2 font-medium">รูปภาพเหตุการณ์</label><input type="file" accept="image/*" onChange={(e) => setEventImageFile(e.target.files?.[0] || null)} className="w-full p-2 border rounded" />{eventImageFile && (<div className="mt-2 text-sm text-gray-600">📎 {eventImageFile.name} ({(eventImageFile.size / 1024 / 1024).toFixed(2)} MB)</div>)}</div>
               <div><label className="block mb-2 font-medium">ประเภทการสมัคร</label><select name="registrationType" value={addEventForm.registrationType} onChange={handleAddEventChange} className="w-full p-2 border rounded"><option value="individual">บุคคลทั่วไป</option><option value="school">โรงเรียน</option></select></div>
               
-              {/* --- ‼️ [เพิ่มใหม่] ส่วนจัดการระดับชั้น --- */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">📚 ระดับชั้นที่เปิดสอบ</h3>
@@ -649,7 +628,6 @@ const AdminDashboard: React.FC = () => {
                   ))}
                 </div>
               </div>
-              {/* --- จบส่วน Levels --- */}
 
               <div>
                 <div className="flex justify-between items-center mb-3"><h3 className="font-medium">📍 ศูนย์สอบ</h3><button type="button" onClick={addStation} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ เพิ่มศูนย์สอบ</button></div>
@@ -705,14 +683,13 @@ const AdminDashboard: React.FC = () => {
                     <div><label className="block mb-1">สถานที่</label><input type="text" value={editEventForm.location} onChange={(e) => setEditEventForm(prev => ({ ...prev, location: e.target.value }))} className="w-full p-2 border rounded" /></div>
                     <div><label className="block mb-1">ประเภทการสมัคร</label><select value={editEventForm.registrationType} onChange={(e) => setEditEventForm(prev => ({ ...prev, registrationType: e.target.value as 'individual' | 'school' }))} className="w-full p-2 border rounded"><option value="individual">บุคคลทั่วไป</option><option value="school">โรงเรียน</option></select></div>
                     
-                    {/* --- ‼️ [เพิ่มใหม่] ส่วนแก้ไข Levels --- */}
                     <div>
                       <div className="flex justify-between items-center mb-3">
                         <h4 className="font-medium">📚 ระดับชั้นที่เปิดสอบ</h4>
                         <button
                           type="button"
                           onClick={() => setEditEventForm(prev => ({
-                            ...prev, levels: [...(prev.levels || []), ''] // 👈 (แก้)
+                            ...prev, levels: [...(prev.levels || []), '']
                           }))}
                           className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
                         >
@@ -749,7 +726,6 @@ const AdminDashboard: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    {/* --- จบส่วน Levels --- */}
 
                     <div>
                       <div className="flex justify-between items-center mb-2"><h4 className="font-medium">ศูนย์สอบ</h4><button type="button" onClick={() => { setEditEventForm(prev => ({ ...prev, stations: [...prev.stations, { stationName: '', address: '', capacity: 0, code: prev.stations.length + 1 }] })); }} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ เพิ่มศูนย์สอบ</button></div>
@@ -785,8 +761,6 @@ const AdminDashboard: React.FC = () => {
                     ))}
                   </div>
                   <div className="flex items-center p-3 bg-white rounded border mb-4"><input type="checkbox" id="isActiveEdit" checked={surveyActive} onChange={(e) => setSurveyActive(e.target.checked)} className="mr-2 w-4 h-4" /><label htmlFor="isActiveEdit" className="cursor-pointer">เปิดให้ผู้สมัครกรอกแบบสอบถามหลังสอบ</label></div>
-                  
-                  {/* --- ‼️ [เพิ่มใหม่] ปุ่ม Export --- */}
                   <div className="flex gap-3 pt-4 border-t mt-4">
                     <button
                       onClick={handleSaveAll}
@@ -811,7 +785,7 @@ const AdminDashboard: React.FC = () => {
                             `${API_BASE_URL}/api/export/survey/${selectedEventId}`,
                             { 
                               headers: { Authorization: `Bearer ${token}` },
-                              responseType: 'blob' // ⬅️ (สำคัญ)
+                              responseType: 'blob'
                             }
                           );
                           const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -824,7 +798,6 @@ const AdminDashboard: React.FC = () => {
                           setEditStatus("Export สำเร็จ!");
                         } catch (err: any) {
                           console.error("Export failed:", err);
-                          // ‼️ [แก้ไข] อ่าน Error จาก Blob ‼️
                           try {
                             const errorText = await (err.response?.data as Blob)?.text();
                             const errorJson = JSON.parse(errorText || '{}');
@@ -839,8 +812,6 @@ const AdminDashboard: React.FC = () => {
                       📤 Export Survey (Excel)
                     </button>
                   </div>
-                  {/* --- จบส่วน Export --- */}
-
                 </div>
               </>
             )}

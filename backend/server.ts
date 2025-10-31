@@ -1,26 +1,11 @@
-// backend/server.ts
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import app from "./src/app";
-
-// Load ENV config
-dotenv.config();
+import app from "./src/app"; 
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/math-talent";
 
-mongoose
-  .connect(MONGO_URI)
-  .then(async () => {
-    console.log("✅ MongoDB connected");
-    
-    // ✅ Actually start the server!
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
-      console.log(`📡 API available at http://localhost:${PORT}/api`);
-    });
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
-  });
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📡 API available at http://localhost:${PORT}/api`);
+}).on('error', (err) => {
+  console.error('❌ Server failed to start:', err);
+  process.exit(1);
+});

@@ -2,10 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
+"scripts": {
     "start": "ts-node server.ts",
-    "seed": "ts-node seedEvents.ts",
-    "dev": "nodemon server.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "dev": "nodemon server.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",

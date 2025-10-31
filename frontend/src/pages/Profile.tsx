@@ -11,7 +11,6 @@ import { Event as EventType, Station } from "../types/event";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// (Interface EventStatus, SurveyQuestion, Survey - เหมือนเดิม)
 interface EventStatus {
   id: string; userCode: string; event: EventType; status: string;
   slipUrl?: string; certificateUrl?: string; registrationId?: string;
@@ -28,9 +27,7 @@ interface UserProfile {
 }
 
 const Profile: React.FC = () => {
-  const navigate = useNavigate(); // (เรียกใช้ useNavigate)
-  
-  // (States ทั้งหมดเหมือนเดิม)
+  const navigate = useNavigate();
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [events, setEvents] = useState<EventStatus[]>([]); 
   const [loading, setLoading] = useState(true);
@@ -48,7 +45,6 @@ const Profile: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', email: '', phone: null, department: null, bio: null });
   const [editedProfile, setEditedProfile] = useState<UserProfile>(userProfile);
 
-  // (fetchRegistrations - เหมือนเดิม)
   const fetchRegistrations = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -58,7 +54,6 @@ const Profile: React.FC = () => {
     } catch (err) { console.error("❌ Failed to fetch registrations:", err); throw err; }
   };
 
-  // (useEffect โหลดข้อมูลหลัก - เหมือนเดิม)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { setLoading(false); return; }
@@ -86,12 +81,10 @@ const Profile: React.FC = () => {
       .finally(() => setLoading(false));
   }, []); 
 
-  // (useEffect [userProfile] - เหมือนเดิม)
   useEffect(() => {
     setEditedProfile(userProfile);
   }, [userProfile]);
 
-  // (handleFileSelect, handleSlipSubmit - เหมือนเดิม)
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, registrationId: string) => {
     const file = e.target.files?.[0] || null;
     setSelectedFiles((prev) => ({ ...prev, [registrationId]: file }));
@@ -117,7 +110,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  // (getStatusText, getEventTitle, getEventDate - เหมือนเดิม)
   const getStatusText = (status: string) => {
     switch (status) {
       case "registered": return "ลงทะเบียนแล้ว - รออัปโหลดสลิป";
@@ -141,7 +133,6 @@ const Profile: React.FC = () => {
     });
   };
 
-  // (handleCertificateDownloadClick - (Logic ที่ถูกต้องแล้ว) - เหมือนเดิม)
   const handleCertificateDownloadClick = async (eventId: string, userCode: string) => {
     console.log("🔍 [Step 1] Certificate download triggered");
     const token = localStorage.getItem("token");
@@ -151,7 +142,6 @@ const Profile: React.FC = () => {
       const surveyData = await fetchSurvey(eventId);
       console.log("📊 [Step 2] Fetched survey data:", surveyData);
       if (surveyData && surveyData.isActive) {
-        // [เพิ่ม] ตรวจสอบว่า User คนนี้ "ตอบไปหรือยัง"
         const check = await checkSurveyResponse(surveyData.id, token);
         if (check.hasSubmitted) {
           console.log("✅ Survey already submitted → downloading certificate.");
@@ -174,7 +164,6 @@ const Profile: React.FC = () => {
     }
   };
   
-  // (downloadCertificate, handleSurveySubmit, handleSurveyAnswerChange - เหมือนเดิม)
   const downloadCertificate = async (eventId: string, userCode: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -245,7 +234,6 @@ const Profile: React.FC = () => {
     setSurveyAnswers((prev) => ({ ...prev, [questionIndex]: value }));
   };
   
-  // (handleLogout, handleProfileSave, handleProfileCancel - เหมือนเดิม)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -276,7 +264,6 @@ const Profile: React.FC = () => {
   if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
-  // (renderDashboardTab - เหมือนเดิม)
   const renderDashboardTab = () => {
     const completedEvents = events.filter(event => event.status === 'completed');
     const certificatesAvailable = events.filter(event => event.status === 'completed');
@@ -287,14 +274,14 @@ const Profile: React.FC = () => {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-blue-900 to-purple-800 rounded-lg shadow-md p-6 text-white"><h1 className="text-3xl font-bold mb-2">ยินดีต้อนรับ, {userProfile.name}!</h1><p className="text-blue-100">นี่คือภาพรวมกิจกรรมและการดำเนินการด่วนของคุณ</p></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Total Events</p><p className="text-2xl font-bold text-gray-900">{events.length}</p></div><div className="bg-blue-100 p-3 rounded-full"><FileText className="h-6 w-6 text-blue-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">+{events.length}</span> registered</p></div>
-          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Completed</p><p className="text-2xl font-bold text-gray-900">{completedEvents.length}</p></div><div className="bg-green-100 p-3 rounded-full"><CheckCircle className="h-6 w-6 text-green-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span> completion rate</p></div>
-          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Certificates</p><p className="text-2xl font-bold text-gray-900">{certificatesAvailable.length}</p></div><div className="bg-yellow-100 p-3 rounded-full"><Award className="h-6 w-6 text-yellow-600" /></div></div><p className="text-sm text-gray-500 mt-2">Available for download</p></div>
-          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Files Uploaded</p><p className="text-2xl font-bold text-gray-900">{uploadedSlipsCount}</p></div><div className="bg-purple-100 p-3 rounded-full"><Upload className="h-6 w-6 text-purple-600" /></div></div><p className="text-sm text-gray-500 mt-2">Payment slips</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">กิจกรรมทั้งหมด</p><p className="text-2xl font-bold text-gray-900">{events.length}</p></div><div className="bg-blue-100 p-3 rounded-full"><FileText className="h-6 w-6 text-blue-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">+{events.length}</span> ลงทะเบียนแล้ว</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">เสร็จสิ้น</p><p className="text-2xl font-bold text-gray-900">{completedEvents.length}</p></div><div className="bg-green-100 p-3 rounded-full"><CheckCircle className="h-6 w-6 text-green-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span> อัตราการเสร็จสิ้น</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">ใบประกาศนียบัตร</p><p className="text-2xl font-bold text-gray-900">{certificatesAvailable.length}</p></div><div className="bg-yellow-100 p-3 rounded-full"><Award className="h-6 w-6 text-yellow-600" /></div></div><p className="text-sm text-gray-500 mt-2">สามารถดาวน์โหลดได้</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">ไฟล์ที่อัปโหลด</p><p className="text-2xl font-bold text-gray-900">{uploadedSlipsCount}</p></div><div className="bg-purple-100 p-3 rounded-full"><Upload className="h-6 w-6 text-purple-600" /></div></div><p className="text-sm text-gray-500 mt-2">สลิปการชำระเงิน</p></div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6"><h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><button onClick={() => setActiveTab('profile')} className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"><Edit className="h-5 w-5 text-blue-600" /><span className="font-medium text-blue-600">Edit Profile</span></button><button onClick={() => setActiveTab('activity')} className="flex items-center gap-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"><Upload className="h-5 w-5 text-green-600" /><span className="font-medium text-green-600">Upload Activity</span></button><button onClick={() => setActiveTab('certificate')} className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"><Download className="h-5 w-5 text-yellow-600" /><span className="font-medium text-yellow-600">Download Certificates</span></button></div></div>
+        <div className="bg-white rounded-lg shadow-md p-6"><h2 className="text-xl font-bold text-gray-800 mb-4">ตัวช่วยการเข้าถึง</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><button onClick={() => setActiveTab('profile')} className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"><Edit className="h-5 w-5 text-blue-600" /><span className="font-medium text-blue-600">แก้ไขโปรไฟล์</span></button><button onClick={() => setActiveTab('activity')} className="flex items-center gap-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"><Upload className="h-5 w-5 text-green-600" /><span className="font-medium text-green-600">อัปโหลดกิจกรรม</span></button><button onClick={() => setActiveTab('certificate')} className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"><Download className="h-5 w-5 text-yellow-600" /><span className="font-medium text-yellow-600">ดาวน์โหลดใบรับรอง</span></button></div></div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-gray-800">Recent Events</h2><button onClick={() => setActiveTab('activity')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</button></div>
+          <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-gray-800">กิจกรรมล่าสุด</h2><button onClick={() => setActiveTab('activity')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">ดูทั้งหมด</button></div>
           <div className="space-y-3">
             {recentEvents.length > 0 ? (
               recentEvents.map((e) => (
@@ -307,31 +294,29 @@ const Profile: React.FC = () => {
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Profile Summary</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">ภาพรวมโปรไฟล์</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><div className="flex items-center gap-3 mb-3"><User className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">Personal Info</span></div><div className="space-y-2 text-sm"><p><span className="font-medium">Department:</span> {userProfile.department || 'Not specified'}</p><p><span className="font-medium">Bio:</span> {userProfile.bio || 'Not specified'}</p></div></div>
-            <div><div className="flex items-center gap-3 mb-3"><TrendingUp className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">Activity Progress</span></div><div className="space-y-2 text-sm"><div className="flex justify-between"><span>Completion Rate</span><span className="font-medium text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span></div><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-green-600 h-2 rounded-full" style={{ width: `${events.length > 0 ? (completedEvents.length / events.length) * 100 : 0}%` }}></div></div></div></div>
+            <div><div className="flex items-center gap-3 mb-3"><User className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">ข้อมูลส่วนตัว</span></div><div className="space-y-2 text-sm"><p><span className="font-medium">โรงเรียน:</span> {userProfile.department || 'ไม่ระบุ'}</p><p><span className="font-medium">ประวัติโดยย่อ:</span> {userProfile.bio || 'ไม่ระบุ'}</p></div></div>
+            <div><div className="flex items-center gap-3 mb-3"><TrendingUp className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">ความก้าวหน้าของกิจกรรม</span></div><div className="space-y-2 text-sm"><div className="flex justify-between"><span>อัตราการสำเร็จ</span><span className="font-medium text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span></div><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-green-600 h-2 rounded-full" style={{ width: `${events.length > 0 ? (completedEvents.length / events.length) * 100 : 0}%` }}></div></div></div></div>
           </div>
         </div>
       </div>
     );
   };
 
-  // (renderProfileTab - ลบ Position/JoinDate)
   const renderProfileTab = () => (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold text-gray-800">Profile Information</h2>{!isEditing ? (<button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"><Edit size={16} />Edit Profile</button>) : (<div className="flex gap-2"><button onClick={handleProfileSave} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"><Save size={16} />Save</button><button onClick={handleProfileCancel} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"><X size={16} />Cancel</button></div>)}</div>
+      <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold text-gray-800">ข้อมูลส่วนตัว</h2>{!isEditing ? (<button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"><Edit size={16} />แก้ไขโปรไฟล์</button>) : (<div className="flex gap-2"><button onClick={handleProfileSave} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"><Save size={16} />บันทึก</button><button onClick={handleProfileCancel} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"><X size={16} />ยกเลิก</button></div>)}</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>{isEditing ? (<input type="text" value={editedProfile.name} onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.name}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Email</label>{isEditing ? (<input type="email" value={editedProfile.email} onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.email}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>{isEditing ? (<input type="tel" value={editedProfile.phone || ''} onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.phone || 'Not specified'}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label>{isEditing ? (<input type="text" value={editedProfile.department || ''} onChange={(e) => setEditedProfile({...editedProfile, department: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.department || 'Not specified'}</p>)}</div>
-        <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>{isEditing ? (<textarea value={editedProfile.bio || ''} onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.bio || 'No bio provided'}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>{isEditing ? (<input type="text" value={editedProfile.name} onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.name}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">อีเมล</label>{isEditing ? (<input type="email" value={editedProfile.email} onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.email}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์</label>{isEditing ? (<input type="tel" value={editedProfile.phone || ''} onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.phone || 'ไม่ระบุ'}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">โรงเรียน</label>{isEditing ? (<input type="text" value={editedProfile.department || ''} onChange={(e) => setEditedProfile({...editedProfile, department: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.department || 'ไม่ระบุ'}</p>)}</div>
+        <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">ประวัติโดยย่อ</label>{isEditing ? (<textarea value={editedProfile.bio || ''} onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.bio || 'No bio provided'}</p>)}</div>
       </div>
     </div>
   );
   
-  // ✅ Activity Tab
   const renderActivityTab = () => {
     const statusColorMap: Record<string, string> = { registered: "bg-gray-100 text-gray-800", slip_uploaded: "bg-yellow-100 text-yellow-800", verified: "bg-blue-100 text-blue-800", exam_ready: "bg-purple-100 text-purple-800", completed: "bg-green-100 text-green-800" };
     const ongoingEvents = events.filter(e => e.status !== "completed");
@@ -339,10 +324,10 @@ const Profile: React.FC = () => {
 
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Activity List</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">รายการกิจกรรม</h2>
         {showSuccessPopup && (<div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">📤 อัปโหลดสลิปสำเร็จแล้ว!</div>)}
         <div className="space-y-4 mb-8">
-          <h3 className="text-lg font-semibold text-gray-800">Ongoing Events ({ongoingEvents.length})</h3>
+          <h3 className="text-lg font-semibold text-gray-800">กิจกรรมที่กำลังดำเนินการ ({ongoingEvents.length})</h3>
           {ongoingEvents.length > 0 ? (
             ongoingEvents.map((e) => (
               <div key={e.id} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg">
@@ -372,7 +357,7 @@ const Profile: React.FC = () => {
           ) : (<p className="text-gray-500 text-center py-4">No ongoing events</p>)}
         </div>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800">Completed Events ({completedEvents.length})</h3>
+          <h3 className="text-lg font-semibold text-gray-800">กิจกรรมที่เสร็จสมบูรณ์ ({completedEvents.length})</h3>
           {completedEvents.length > 0 ? (
             completedEvents.map((e) => (
               <div key={e.id} className="flex flex-col gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
@@ -386,13 +371,11 @@ const Profile: React.FC = () => {
                       {getStatusText(e.status)}
                     </span>
                   </div>
-                  {/* --- ‼️ [แก้ไข] ปุ่ม "View Certificate" ‼️ --- */}
-                  {/* (เปลี่ยน onClick ให้ไปที่แท็บ 'certificate' แทน) */}
                   <button 
                     onClick={() => setActiveTab('certificate')} 
                     className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
                   >
-                    <Award size={16} /> View Certificate
+                    <Award size={16} /> ดูใบประกาศนียบัตร
                   </button>
                 </div>
               </div>
@@ -403,11 +386,11 @@ const Profile: React.FC = () => {
     );
   };
 
-  // Certificate Tab
+
   const renderCertificateTab = () => {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Certificates</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">ใบประกาศนียบัตร</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {events.filter(event => event.status === 'completed').map((event) => (
             <div key={event.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
@@ -415,18 +398,16 @@ const Profile: React.FC = () => {
                 <Award className="h-8 w-8 text-yellow-500" />
                 <div>
                   <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
-                  <p className="text-sm text-gray-600">Completed on {getEventDate(event.event?.dateAndTime)}</p>
+                  <p className="text-sm text-gray-600">เสร็จสิ้นเมื่อ {getEventDate(event.event?.dateAndTime)}</p>
                   {event.event.location && (<p className="text-xs text-gray-500">{event.event.location}</p>)}
                 </div>
               </div>
-              {/* --- ‼️ [ยืนยัน] ปุ่มนี้ทำงานถูกต้อง ‼️ --- */}
-              {/* (ปุ่มนี้จะเรียก Logic การดาวน์โหลด/ทำ Survey) */}
               <button
                 onClick={() => { handleCertificateDownloadClick(event.event.id, event.userCode); }}
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download size={16} />
-                Download Certificate
+                ดาวน์โหลดใบประกาศนียบัตร
               </button>
             </div>
           ))}
@@ -438,7 +419,6 @@ const Profile: React.FC = () => {
     );
   };
 
-  // (renderSurveyModal - เหมือนเดิม)
   const renderSurveyModal = () => {
     if (!showSurveyModal || !currentSurvey) return null;
     return (
@@ -498,12 +478,12 @@ const Profile: React.FC = () => {
       <div className="min-h-screen flex bg-gray-100 p-4">
         <aside className="w-64 h-screen bg-white shadow-lg rounded-2xl flex flex-col justify-between overflow-hidden">
           <div>
-            <div className="flex items-center gap-3 px-6 py-4 border-b"><User className="h-8 w-8 text-blue-600" /><h1 className="text-lg font-bold text-gray-800">Profile Dashboard</h1></div>
+            <div className="flex items-center gap-3 px-6 py-4 border-b"><User className="h-8 w-8 text-blue-600" /><h1 className="text-lg font-bold text-gray-800">โปรไฟล์</h1></div>
             <nav className="mt-4">
-              <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Home size={16} />Dashboard</button>
-              <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Settings size={16} />Manage Profile</button>
-              <button onClick={() => setActiveTab('activity')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'activity' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><FileText size={16} />Activity List</button>
-              <button onClick={() => setActiveTab('certificate')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'certificate' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Award size={16} />Certificates</button>
+              <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Home size={16} />หน้าแรก</button>
+              <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Settings size={16} />จัดการโปรไฟล์</button>
+              <button onClick={() => setActiveTab('activity')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'activity' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><FileText size={16} />รายการกิจกรรม</button>
+              <button onClick={() => setActiveTab('certificate')} className={`w-full flex items-center gap-2 px-6 py-3 text-sm font-medium text-left ${activeTab === 'certificate' ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100'}`}><Award size={16} />ใบประกาศนียบัตร</button>
             </nav>
           </div>
           <div className="px-6 py-4 border-t"><button onClick={handleLogout} className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm"><LogOut size={16} />Log Out</button></div>
