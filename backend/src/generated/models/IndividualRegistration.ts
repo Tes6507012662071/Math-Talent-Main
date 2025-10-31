@@ -591,10 +591,6 @@ export type EnumIndividualStatusFieldUpdateOperationsInput = {
   set?: $Enums.IndividualStatus
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type IndividualRegistrationCreateNestedManyWithoutEventInput = {
   create?: Prisma.XOR<Prisma.IndividualRegistrationCreateWithoutEventInput, Prisma.IndividualRegistrationUncheckedCreateWithoutEventInput> | Prisma.IndividualRegistrationCreateWithoutEventInput[] | Prisma.IndividualRegistrationUncheckedCreateWithoutEventInput[]
   connectOrCreate?: Prisma.IndividualRegistrationCreateOrConnectWithoutEventInput | Prisma.IndividualRegistrationCreateOrConnectWithoutEventInput[]

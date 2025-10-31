@@ -1,14 +1,9 @@
 import { Request, Response } from "express";
-// 1. ❌ ลบ Mongoose Models ทิ้ง
-// import Event from "../models/Event";
-// import Counter from "../models/Counter"; 
-// 2. ✅ Import Prisma Client และ Enum ที่จำเป็น
 import prisma from '../utils/prisma';
 import { RegistrationType } from '../generated/client'; 
 
 export const getAllEvents = async (req: Request, res: Response) => {
   try {
-    // 3. ‼️ Mongoose: .find().sort() -> Prisma: .findMany() + orderBy
     const events = await prisma.event.findMany({
       orderBy: { createdAt: 'desc' }
     });
@@ -21,11 +16,10 @@ export const getAllEvents = async (req: Request, res: Response) => {
 export const getEventById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // 4. ‼️ Mongoose: .findById() -> Prisma: .findUnique()
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
-        stations: true, // ✅ ดึง Stations (ศูนย์สอบ) ที่เป็น Nested Model มาด้วย
+        stations: true, 
       }
     });
 
@@ -48,6 +42,7 @@ export const createEvent = async (req: Request, res: Response) => {
       location,
       registrationType,
       stations, // (ยังเป็น JSON string)
+      levels    // ⬅️ 1. [เพิ่ม] รับค่า levels
     } = req.body;
 
     if (!nameEvent || !dateAndTime) {
@@ -61,42 +56,41 @@ export const createEvent = async (req: Request, res: Response) => {
     } catch {
       return res.status(400).json({ success: false, message: "รูปแบบ stations ไม่ถูกต้อง" });
     }
-
     if (!parsedStations || !Array.isArray(parsedStations) || parsedStations.length === 0) {
       return res.status(400).json({ success: false, message: "ต้องมีอย่างน้อย 1 ศูนย์สอบ" });
     }
+
+    // --- ‼️ 2. [เพิ่ม] Logic การแปลง Levels ‼️ ---
+    let parsedLevels = []; // (ค่าเริ่มต้นเป็น Array ว่าง)
+    if (levels) { // (เช็กว่ามีส่งมาไหม)
+        try {
+            parsedLevels = JSON.parse(levels);
+            if (!Array.isArray(parsedLevels)) {
+                 return res.status(400).json({ success: false, message: "รูปแบบ Levels ต้องเป็น Array" });
+            }
+        } catch (e) {
+            return res.status(400).json({ success: false, message: "รูปแบบ Levels (JSON) ไม่ถูกต้อง" });
+        }
+    }
+    // --- จบ Logic Levels ---
 
     let imageUrl = '';
     if (req.file) {
       imageUrl = `/api-images/events/${req.file.filename}`;
     }
-    // --- (Logic การแปลง Stations) ---
 
-
-    // 5. ‼️ Mongoose: Counter.findOneAndUpdate -> Prisma: .counter.upsert() ‼️
-    //    (ทำ Atomic Increment ($inc) ที่ถูกต้องใน Prisma)
+    // --- (Logic การสร้าง Code) ---
     const counter = await prisma.counter.upsert({
       where: { name: 'eventId' },
-      update: {
-        seq: { increment: 1 } // ✅ $inc: { seq: 1 }
-      },
-      create: {
-        name: 'eventId',
-        seq: 1 // ✅ ถ้าไม่เจอ ให้สร้างและเริ่มที่ 1
-      }
+      update: { seq: { increment: 1 } },
+      create: { name: 'eventId', seq: 1 }
     });
-    
-    // --- (Logic การสร้าง Code) ---
     const nextCode = counter.seq;
     if (nextCode > 99) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "ถึงขีดจำกัดรหัสกิจกรรม (99)" 
-      });
+      return res.status(400).json({ success: false, message: "ถึงขีดจำกัดรหัสกิจกรรม (99)" });
     }
     const code = String(nextCode).padStart(2, "0");
     // --- (Logic การสร้าง Code) ---
-
 
     // 6. ‼️ Mongoose: new Event().save() -> Prisma: .event.create() ‼️
     const newEvent = await prisma.event.create({
@@ -109,17 +103,17 @@ export const createEvent = async (req: Request, res: Response) => {
         images: imageUrl,
         registrationType: registrationType as RegistrationType,
         
-        // 7. ✅ Fix: บังคับ Type และสร้าง Nested Model (Stations) พร้อมกัน
+        levels: parsedLevels, // ⬅️ 3. [เพิ่ม] บันทึก levels
+
         stations: {
           createMany: {
             data: parsedStations.map((station: any) => ({
-              // ‼️ ต้องมั่นใจว่า Field ตรงกับ model Station
               stationName: station.stationName,
               address: station.address,
-              capacity: parseInt(station.capacity), // ✅ ใช้ parseInt เพื่อความมั่นใจว่าเป็น Int
-              code: parseInt(station.code),         // ✅ ใช้ parseInt เพื่อความมั่นใจว่าเป็น Int
+              capacity: parseInt(station.capacity),
+              code: parseInt(station.code),
             })),
-            skipDuplicates: true // ป้องกัน Error ในระดับ Nested
+            skipDuplicates: true
           }
         }
       }
@@ -132,7 +126,6 @@ export const createEvent = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Create event error:", error);
-    // ‼️ ควรดู Log ใน Terminal ของ Backend ว่า Prisma Error Code คืออะไร (เช่น P2002) ‼️
     res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
   }
 };
@@ -146,10 +139,10 @@ export const updateEvent = async (req: Request, res: Response) => {
       dateAndTime,
       location,
       registrationType,
-      stations
+      stations,
+      levels // ⬅️ 1. [เพิ่ม] รับค่า levels
     } = req.body;
 
-    // 8. ‼️ Mongoose: .findById() -> Prisma: .findUnique()
     const existingEvent = await prisma.event.findUnique({ where: { id } });
     if (!existingEvent) {
       return res.status(404).json({ success: false, message: "ไม่พบกิจกรรมนี้" });
@@ -168,7 +161,21 @@ export const updateEvent = async (req: Request, res: Response) => {
       updateData.images = `/api-images/events/${req.file.filename}`;
     }
 
-    // 10. ‼️ (สำคัญ) อัปเดต Stations (ลบของเก่าทิ้งทั้งหมด, สร้างใหม่ทั้งหมด) ‼️
+    // --- ‼️ 2. [เพิ่ม] Logic การอัปเดต Levels ‼️ ---
+    if (levels) { // (ถ้ามีส่ง levels มาให้อัปเดต)
+      try {
+        const parsedLevels = JSON.parse(levels);
+        if (!Array.isArray(parsedLevels)) {
+           return res.status(400).json({ success: false, message: "รูปแบบ Levels ต้องเป็น Array" });
+        }
+        updateData.levels = parsedLevels; // ⬅️ เพิ่ม levels เข้าไปใน data ที่จะอัปเดต
+      } catch (e) {
+        return res.status(400).json({ success: false, message: "รูปแบบ Levels (JSON) ไม่ถูกต้อง" });
+      }
+    }
+    // --- จบ Logic Levels ---
+
+    // 10. (สำคัญ) อัปเดต Stations (ถ้ามีส่งมา)
     if (stations) {
       try {
         const parsedStations = JSON.parse(stations);
@@ -177,8 +184,8 @@ export const updateEvent = async (req: Request, res: Response) => {
         }
         
         updateData.stations = {
-          deleteMany: {}, // ✅ ลบ Stations เก่าทั้งหมดของ Event นี้
-          createMany: {   // ✅ สร้าง Stations ใหม่ทั้งหมด
+          deleteMany: {}, // ลบ Stations เก่าทั้งหมด
+          createMany: {   // สร้าง Stations ใหม่ทั้งหมด
             data: parsedStations.map((station: any) => ({
               stationName: station.stationName,
               address: station.address,
@@ -193,7 +200,6 @@ export const updateEvent = async (req: Request, res: Response) => {
       }
     }
 
-    // 11. ‼️ Mongoose: .findByIdAndUpdate() -> Prisma: .update()
     const updatedEvent = await prisma.event.update({
       where: { id: id },
       data: updateData,

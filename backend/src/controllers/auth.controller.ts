@@ -1,34 +1,25 @@
-// backend/src/controllers/auth.controller.ts (เวอร์ชัน Prisma)
+// backend/src/controllers/auth.controller.ts (ฉบับแก้ไข Error TS2339)
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-// 1. ❌ ลบ Mongoose Model ทิ้ง
-// import User from "../models/User";
-
-// 2. ✅ Import Prisma Client เข้ามาแทน
 import prisma from '../utils/prisma'; 
+import { Prisma } from '../generated/client'; // Import Prisma (สำหรับดัก Error)
 
+// (register - เหมือนเดิม)
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
-
   try {
-    // 3. ‼️ Mongoose: .findOne({ email }) -> Prisma: .findUnique({ where: { email } }) ‼️
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return res.status(400).json({ message: "Email is already in use" });
     }
-
     const hashed = await bcrypt.hash(password, 10);
-    
-    // 4. ‼️ Mongoose: .create() -> Prisma: .user.create() ‼️
     const user = await prisma.user.create({
       data: { name, email, password: hashed }
     });
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { // 5. ✅ user._id -> user.id
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
     });
-
     res.status(201).json({ token });
   } catch (err) {
     console.error("Register error:", err);
@@ -36,38 +27,31 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+// (loginUser - เหมือนเดิม)
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   console.log("[Backend] Login request:", email);
-
   try {
-    // 6. ‼️ Mongoose: .findOne({ email }) -> Prisma: .findUnique({ where: { email } }) ‼️
     const user = await prisma.user.findUnique({ where: { email } });
-    
     if (!user) {
       console.log("[Backend] User not found:", email);
       return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     }
-
-    // Logic เปรียบเทียบรหัสผ่าน (เหมือนเดิม)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log("[Backend] Password mismatch for user:", email);
       return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     }
-
     const token = jwt.sign(
-      { id: user.id, role: user.role }, // 7. ✅ user._id -> user.id
+      { id: user.id, role: user.role },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
-
     console.log("[Backend] Login success for user:", email, "Role:", user.role);
-
     res.json({
       token,
       user: {
-        id: user.id, // 8. ✅ _id -> id
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -79,34 +63,77 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
+// (getCurrentUser - เหมือนเดิม)
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
-    // 9. ✅ req.user.id มาจาก authMiddleware (ซึ่งถูกแก้แล้ว)
     const userId = (req as any).user?.id;
     if (!userId) {
       return res.status(401).json({ message: "ไม่ได้รับสิทธิ์" });
     }
-
-    // 10. ‼️ Mongoose: .findById().select('-password') -> Prisma: .findUnique() + select ‼️
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { // ✅ ไม่เอา password
+      select: { 
         id: true,
         name: true,
         email: true,
         role: true,
         createdAt: true,
         updatedAt: true,
+        phone: true,
+        department: true,
+        bio: true
       }
     });
-    
     if (!user) {
       return res.status(404).json({ message: "ไม่พบผู้ใช้" });
     }
-
     res.status(200).json(user);
   } catch (err) {
     console.error("getCurrentUser error:", err);
     res.status(500).json({ message: "Cannot fetch user" });
+  }
+};
+
+// (updateUserProfile - แก้ไขการตรวจสอบ Error)
+export const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "ไม่ได้รับสิทธิ์ (No User ID)" });
+    }
+
+    const { name, phone, department, bio, email } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        email,
+        phone,
+        department,
+        bio
+      }
+    });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    res.status(200).json(userWithoutPassword);
+
+  } catch (err: any) {
+     console.error("updateUserProfile error:", err);
+     
+     // --- ‼️ [แก้ไข] ‼️ ---
+     // (เพิ่ม Array.isArray() เพื่อตรวจสอบ Type ก่อนเรียก .includes())
+     if (
+        err instanceof Prisma.PrismaClientKnownRequestError && 
+        err.code === 'P2002' && 
+        err.meta && // 👈 [1] เช็กว่า meta ไม่ใช่ null
+        Array.isArray(err.meta.target) && // 👈 [2] ตรวจสอบว่าเป็น Array
+        err.meta.target.includes('email') // 👈 [3] ตอนนี้ .includes() ปลอดภัยแล้ว
+     ) {
+         return res.status(400).json({ message: "อีเมลนี้ถูกใช้ไปแล้ว" });
+     }
+     // ---
+     
+    res.status(500).json({ message: "Update profile failed" });
   }
 };

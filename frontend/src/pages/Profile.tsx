@@ -1,53 +1,38 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { User, Upload, Download, LogOut, Edit, Save, X, FileText, Award, Settings, Home, TrendingUp, CheckCircle } from 'lucide-react';
+import { useNavigate } from "react-router-dom"; // (Import useNavigate)
 import { fetchUserProfile } from "../api/auth";
 import { getMyRegisteredEvents, uploadPaymentSlip } from "../api/registration";
-import { fetchSurvey, submitSurveyResponse } from "../api/survey";
+import { fetchSurvey, submitSurveyResponse, checkSurveyResponse } from "../api/survey";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-// 1. ✅ Import Type ที่ถูกต้องจาก /types/event
 import { Event as EventType, Station } from "../types/event"; 
 
-// 2. ✅ ใช้ REACT_APP_API_URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// 3. ✅ แก้ไข Interface นี้ให้ใช้ Type ที่ถูกต้อง
+// (Interface EventStatus, SurveyQuestion, Survey - เหมือนเดิม)
 interface EventStatus {
-  id: string; // ‼️ ใช้ id
-  userCode: string;
-  // ✅ ใช้ EventType ที่ Import มา
-  event: EventType; 
-  status: string;
-  slipUrl?: string;
-  certificateUrl?: string;
-  registrationId?: string;
-  fullname?: string;
-  grade?: string;
-  school?: string;
-  phone?: string;
-  email?: string;
-  note?: string;
+  id: string; userCode: string; event: EventType; status: string;
+  slipUrl?: string; certificateUrl?: string; registrationId?: string;
+  fullname?: string; grade?: string; school?: string; phone?: string; email?: string; note?: string;
 }
-
 interface SurveyQuestion {
-  question: string;
-  type: 'text' | 'radio' | 'checkbox';
-  options?: string[];
+  question: string; type: 'text' | 'radio' | 'checkbox'; options?: string[];
 }
-
 interface Survey {
-  id: string; // ‼️ ใช้ id
-  eventId: string;
-  title: string;
-  questions: SurveyQuestion[];
-  isActive: boolean;
+  id: string; eventId: string; title: string; questions: SurveyQuestion[]; isActive: boolean;
+}
+interface UserProfile {
+  name: string; email: string; phone: string | null; department: string | null; bio: string | null;
 }
 
 const Profile: React.FC = () => {
-  // ... (State ส่วนใหญ่เหมือนเดิม)
+  const navigate = useNavigate(); // (เรียกใช้ useNavigate)
+  
+  // (States ทั้งหมดเหมือนเดิม)
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
-  const [events, setEvents] = useState<EventStatus[]>([]); // ✅ ใช้ EventStatus
+  const [events, setEvents] = useState<EventStatus[]>([]); 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isEditing, setIsEditing] = useState(false);
@@ -60,71 +45,57 @@ const Profile: React.FC = () => {
   const [surveyAnswers, setSurveyAnswers] = useState<{ [key: number]: string | string[] }>({});
   const [pendingDownload, setPendingDownload] = useState<{ eventId: string; userCode: string } | null>(null);
   const [surveySubmitting, setSurveySubmitting] = useState(false);
-  const [userProfile, setUserProfile] = useState({ name: '', email: '', phone: '', department: '', position: '', joinDate: '', bio: '' });
-  const [editedProfile, setEditedProfile] = useState(userProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', email: '', phone: null, department: null, bio: null });
+  const [editedProfile, setEditedProfile] = useState<UserProfile>(userProfile);
 
-  // ✅ SIMPLIFIED: Single function to fetch data
+  // (fetchRegistrations - เหมือนเดิม)
   const fetchRegistrations = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
-      
       const registrations = await getMyRegisteredEvents(token); 
-      console.log("✅ Fetched registrations:", registrations);
       setEvents(registrations);
-    } catch (err) {
-      console.error("❌ Failed to fetch registrations:", err);
-      throw err;
-    }
+    } catch (err) { console.error("❌ Failed to fetch registrations:", err); throw err; }
   };
 
-  // ✅ SIMPLIFIED: Load data using single API
+  // (useEffect โหลดข้อมูลหลัก - เหมือนเดิม)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("ไม่พบ token ใน localStorage"); setLoading(false); return;
-    }
+    if (!token) { setLoading(false); return; }
     Promise.all([
       fetchUserProfile(token),
       fetchRegistrations(),
     ])
       .then(([userData]) => {
-        setUser(userData);
-        setUserProfile({
-          name: (userData as any).name || '',
-          email: (userData as any).email || '',
+        setUser(userData); 
+        const dbProfile = {
+          name: (userData as any).name || '', email: (userData as any).email || '',
           phone: (userData as any).phone || '',
-          department: (userData as any).department || '',
-          position: (userData as any).position || '',
-          joinDate: (userData as any).joinDate || '',
-          bio: (userData as any).bio || ''
-        });
+      	  department: (userData as any).department || '',
+      	  bio: (userData as any).bio || ''
+        };
+        setUserProfile(dbProfile); setEditedProfile(dbProfile);
       })
       .catch((err) => {
         console.error("❌ เกิด error ขณะโหลดข้อมูล:", err);
         if ((err as any).response?.status === 401) {
           localStorage.removeItem("token");
           alert("Session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
-        } else {
-          // (ไม่ต้อง Alert Error 404 ของ fetchRegistrations ที่นี่)
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, []); 
 
-
-  // Update editedProfile when userProfile changes
+  // (useEffect [userProfile] - เหมือนเดิม)
   useEffect(() => {
     setEditedProfile(userProfile);
   }, [userProfile]);
 
-  // ✅ Handle file selection
+  // (handleFileSelect, handleSlipSubmit - เหมือนเดิม)
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, registrationId: string) => {
     const file = e.target.files?.[0] || null;
     setSelectedFiles((prev) => ({ ...prev, [registrationId]: file }));
   };
-
-  // ✅ SIMPLIFIED: Handle slip upload
   const handleSlipSubmit = async (registrationId: string) => {
     const file = selectedFiles[registrationId];
     if (!file) return alert("กรุณาเลือกไฟล์ก่อน");
@@ -132,13 +103,12 @@ const Profile: React.FC = () => {
       setUploading(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
-      console.log("🔄 Uploading slip for registration:", registrationId);
       await uploadPaymentSlip(token, registrationId, file);
       alert("✅ อัปโหลดสลิปสำเร็จ");
       setSelectedFiles((prev) => ({ ...prev, [registrationId]: null }));
       setShowSuccessPopup(true);
       setTimeout(() => setShowSuccessPopup(false), 3000);
-      await fetchRegistrations(); // Refresh ข้อมูล
+      await fetchRegistrations();
     } catch (err) {
       console.error("❌ Upload slip failed:", err);
       alert("❌ อัปโหลดสลิปไม่สำเร็จ");
@@ -147,7 +117,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  // helper แปลงสถานะ
+  // (getStatusText, getEventTitle, getEventDate - เหมือนเดิม)
   const getStatusText = (status: string) => {
     switch (status) {
       case "registered": return "ลงทะเบียนแล้ว - รออัปโหลดสลิป";
@@ -158,13 +128,10 @@ const Profile: React.FC = () => {
       default: return status;
     }
   };
-
-  // Helper function to safely get event title
   const getEventTitle = (eventData?: EventType): string => {
     if (!eventData) return 'Untitled Event';
-    return eventData.nameEvent || 'Untitled Event'; // ‼️ ใช้ nameEvent
+    return eventData.nameEvent || 'Untitled Event';
   };
-
   const getEventDate = (dateInput?: string | Date): string => {
     if (!dateInput) return 'ยังไม่ระบุวันที่';
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
@@ -174,37 +141,45 @@ const Profile: React.FC = () => {
     });
   };
 
-  // ✅ New function to handle certificate download with survey
+  // (handleCertificateDownloadClick - (Logic ที่ถูกต้องแล้ว) - เหมือนเดิม)
   const handleCertificateDownloadClick = async (eventId: string, userCode: string) => {
     console.log("🔍 [Step 1] Certificate download triggered");
+    const token = localStorage.getItem("token");
+    if (!token) return; 
+
     try {
       const surveyData = await fetchSurvey(eventId);
       console.log("📊 [Step 2] Fetched survey data:", surveyData);
-      
       if (surveyData && surveyData.isActive) {
-        console.log("✅ Survey exists and is active → showing modal");
-        setCurrentSurvey(surveyData);
-        setPendingDownload({ eventId, userCode });
-        setSurveyAnswers({});
-        setShowSurveyModal(true);
+        // [เพิ่ม] ตรวจสอบว่า User คนนี้ "ตอบไปหรือยัง"
+        const check = await checkSurveyResponse(surveyData.id, token);
+        if (check.hasSubmitted) {
+          console.log("✅ Survey already submitted → downloading certificate.");
+          await downloadCertificate(eventId, userCode);
+        } else {
+          console.log("⚠️ Survey not submitted → showing modal.");
+          setCurrentSurvey(surveyData);
+          setPendingDownload({ eventId, userCode });
+          setSurveyAnswers({});
+          setShowSurveyModal(true);
+        }
       } else {
         console.log("⚠️ No active survey → downloading certificate directly");
         await downloadCertificate(eventId, userCode);
       }
     } catch (error) {
-      console.error("❌ [Error] Failed to fetch survey:", error);
+      console.error("❌ [Error] Failed during survey check:", error);
       console.log("➡️ Proceeding to download certificate anyway...");
       await downloadCertificate(eventId, userCode);
     }
   };
-
-  // ✅ Function to actually download certificate
+  
+  // (downloadCertificate, handleSurveySubmit, handleSurveyAnswerChange - เหมือนเดิม)
   const downloadCertificate = async (eventId: string, userCode: string) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
       setDownloadProgress((prev) => ({ ...prev, [userCode]: 0 }));
-
       const res = await axios.get(
         `${API_BASE_URL}/api/certificates/download/${eventId}/${userCode}`, 
         {
@@ -218,7 +193,6 @@ const Profile: React.FC = () => {
           },
         }
       );
-
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -233,94 +207,76 @@ const Profile: React.FC = () => {
       setDownloadProgress((prev) => ({ ...prev, [userCode]: 0 }));
     }
   };
-
-  // ✅ Handle survey submission
   const handleSurveySubmit = async () => {
-    console.log("📤 [Step 3] Survey submission started");
-    if (!currentSurvey || !pendingDownload) {
-      console.error("❌ Missing currentSurvey or pendingDownload"); return;
-    }
-    
-    if (!currentSurvey.id) {
-      alert("ข้อมูลแบบสอบถามไม่สมบูรณ์ กรุณาลองใหม่"); return;
-    }
-
-    // ตรวจสอบว่าตอบครบทุกข้อ
+    if (!currentSurvey || !pendingDownload) return;
+    if (!currentSurvey.id) { alert("ข้อมูลแบบสอบถามไม่สมบูรณ์"); return; }
     const unanswered = currentSurvey.questions.some((_, i) => {
       const ans = surveyAnswers[i];
       return !ans || (Array.isArray(ans) && ans.length === 0) || ans === '';
     });
-    if (unanswered) {
-      alert('กรุณาตอบคำถามให้ครบทุกข้อ');
-      return;
-    }
-
+    if (unanswered) { alert('กรุณาตอบคำถามให้ครบทุกข้อ'); return; }
     try {
       setSurveySubmitting(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token");
-
-      // ‼️ [แก้ไข] แปลง Array (Checkbox) เป็น JSON String ก่อนส่ง ‼️
       const answersArray = currentSurvey.questions.map((q, index) => {
         const rawAnswer = surveyAnswers[index];
         return {
           questionIndex: index,
           question: q.question,
-          // ✅ ถ้าคำตอบเป็น Array ให้ JSON.stringify()
           answer: Array.isArray(rawAnswer) ? JSON.stringify(rawAnswer) : rawAnswer
         };
       });
-
-      console.log("📦 [Step 4] Submitting with:", {
-        eventId: pendingDownload.eventId,
-        surveyId: currentSurvey.id,
-        userCode: pendingDownload.userCode,
-        answers: answersArray // 👈 ใช้ Array ที่แปลงแล้ว
-      });
-
       await submitSurveyResponse(
-        pendingDownload.eventId,
-        currentSurvey.id, 
-        answersArray,
-        pendingDownload.userCode,
-        token
+        pendingDownload.eventId, currentSurvey.id, answersArray,
+        pendingDownload.userCode, token
       );
-      
-      console.log("✅ [Step 5] Survey submitted successfully!");
-
-      // ปิด modal และดาวน์โหลด
       setShowSurveyModal(false);
       await downloadCertificate(pendingDownload.eventId, pendingDownload.userCode);
       setCurrentSurvey(null); setPendingDownload(null); setSurveyAnswers({});
     } catch (error: any) {
       console.error("❌ Survey submission error:", error);
-      const msg = error.response?.data?.message || "ส่งแบบสอบถามไม่สำเร็จ";
-      alert(msg);
+      alert(error.response?.data?.message || "ส่งแบบสอบถามไม่สำเร็จ");
     } finally {
       setSurveySubmitting(false);
     }
   };
-
-  // ✅ Handle survey answer change
   const handleSurveyAnswerChange = (questionIndex: number, value: string | string[]) => {
     setSurveyAnswers((prev) => ({ ...prev, [questionIndex]: value }));
   };
-
+  
+  // (handleLogout, handleProfileSave, handleProfileCancel - เหมือนเดิม)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
   };
-
-  const handleProfileSave = () => { setIsEditing(false); setUserProfile(editedProfile); /* TODO: API call */ };
-  const handleProfileCancel = () => { setIsEditing(false); setEditedProfile(userProfile); };
+  const handleProfileSave = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) { alert("Session หมดอายุ กรุณาล็อกอินใหม่"); return; }
+    try {
+      const res = await axios.patch(
+        `${API_BASE_URL}/api/auth/profile`, 
+        editedProfile,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserProfile(res.data); 
+      setIsEditing(false);
+      alert("บันทึกข้อมูล Profile สำเร็จ!");
+    } catch (error: any) {
+      console.error("❌ Profile save error:", error);
+      alert("เกิดข้อผิดพลาด: " + (error.response?.data?.message || "ไม่สามารถบันทึกได้"));
+    }
+  };
+  const handleProfileCancel = () => {
+    setEditedProfile(userProfile);
+    setIsEditing(false);
+  };
 
   if (loading) return <div className="p-8 text-center">⏳ กำลังโหลดข้อมูล...</div>;
   if (!user) return <div className="p-8 text-center">⚠ ไม่พบข้อมูลผู้ใช้</div>;
 
-  console.log("✅ Current events state:", events);
-
-  // Dashboard Tab
+  // (renderDashboardTab - เหมือนเดิม)
   const renderDashboardTab = () => {
     const completedEvents = events.filter(event => event.status === 'completed');
     const certificatesAvailable = events.filter(event => event.status === 'completed');
@@ -329,51 +285,22 @@ const Profile: React.FC = () => {
 
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-900 to-purple-800 rounded-lg shadow-md p-6 text-white">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {userProfile.name}!</h1>
-          <p className="text-blue-100">Here's your activity overview and quick actions.</p>
-        </div>
+        <div className="bg-gradient-to-r from-blue-900 to-purple-800 rounded-lg shadow-md p-6 text-white"><h1 className="text-3xl font-bold mb-2">ยินดีต้อนรับ, {userProfile.name}!</h1><p className="text-blue-100">นี่คือภาพรวมกิจกรรมและการดำเนินการด่วนของคุณ</p></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Total Events</p><p className="text-2xl font-bold text-gray-900">{events.length}</p></div><div className="bg-blue-100 p-3 rounded-full"><FileText className="h-6 w-6 text-blue-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">+{events.length}</span> registered</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Completed</p><p className="text-2xl font-bold text-gray-900">{completedEvents.length}</p></div><div className="bg-green-100 p-3 rounded-full"><CheckCircle className="h-6 w-6 text-green-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span> completion rate</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Certificates</p><p className="text-2xl font-bold text-gray-900">{certificatesAvailable.length}</p></div><div className="bg-yellow-100 p-3 rounded-full"><Award className="h-6 w-6 text-yellow-600" /></div></div><p className="text-sm text-gray-500 mt-2">Available for download</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Files Uploaded</p><p className="text-2xl font-bold text-gray-900">{uploadedSlipsCount}</p></div><div className="bg-purple-100 p-3 rounded-full"><Upload className="h-6 w-6 text-purple-600" /></div></div><p className="text-sm text-gray-500 mt-2">Payment slips</p>
-          </div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Total Events</p><p className="text-2xl font-bold text-gray-900">{events.length}</p></div><div className="bg-blue-100 p-3 rounded-full"><FileText className="h-6 w-6 text-blue-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">+{events.length}</span> registered</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Completed</p><p className="text-2xl font-bold text-gray-900">{completedEvents.length}</p></div><div className="bg-green-100 p-3 rounded-full"><CheckCircle className="h-6 w-6 text-green-600" /></div></div><p className="text-sm text-gray-500 mt-2"><span className="text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span> completion rate</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Certificates</p><p className="text-2xl font-bold text-gray-900">{certificatesAvailable.length}</p></div><div className="bg-yellow-100 p-3 rounded-full"><Award className="h-6 w-6 text-yellow-600" /></div></div><p className="text-sm text-gray-500 mt-2">Available for download</p></div>
+          <div className="bg-white rounded-lg shadow-md p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-gray-600">Files Uploaded</p><p className="text-2xl font-bold text-gray-900">{uploadedSlipsCount}</p></div><div className="bg-purple-100 p-3 rounded-full"><Upload className="h-6 w-6 text-purple-600" /></div></div><p className="text-sm text-gray-500 mt-2">Payment slips</p></div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button onClick={() => setActiveTab('profile')} className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"><Edit className="h-5 w-5 text-blue-600" /><span className="font-medium text-blue-600">Edit Profile</span></button>
-            <button onClick={() => setActiveTab('activity')} className="flex items-center gap-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"><Upload className="h-5 w-5 text-green-600" /><span className="font-medium text-green-600">Upload Activity</span></button>
-            <button onClick={() => setActiveTab('certificate')} className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"><Download className="h-5 w-5 text-yellow-600" /><span className="font-medium text-yellow-600">Download Certificates</span></button>
-          </div>
-        </div>
+        <div className="bg-white rounded-lg shadow-md p-6"><h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><button onClick={() => setActiveTab('profile')} className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"><Edit className="h-5 w-5 text-blue-600" /><span className="font-medium text-blue-600">Edit Profile</span></button><button onClick={() => setActiveTab('activity')} className="flex items-center gap-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"><Upload className="h-5 w-5 text-green-600" /><span className="font-medium text-green-600">Upload Activity</span></button><button onClick={() => setActiveTab('certificate')} className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"><Download className="h-5 w-5 text-yellow-600" /><span className="font-medium text-yellow-600">Download Certificates</span></button></div></div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-gray-800">Recent Events</h2><button onClick={() => setActiveTab('activity')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</button></div>
           <div className="space-y-3">
             {recentEvents.length > 0 ? (
-              recentEvents.map((event) => (
-                // ‼️ แก้ key เป็น id ‼️
-                <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-full"><FileText className="h-4 w-4 text-blue-600" /></div>
-                    <div>
-                      <h3 className="font-medium text-gray-800">{getEventTitle(event.event)}</h3>
-                      {/* ‼️ ใช้ event.event.dateAndTime ‼️ */}
-                      <p className="text-sm text-gray-600">{getEventDate(event.event?.dateAndTime)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${event.status === 'completed' ? 'bg-green-100 text-green-800' : event.status === 'slip_uploaded' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>{getStatusText(event.status)}</span>
-                    {event.status === 'completed' && (<Award className="h-4 w-4 text-yellow-500" />)}
-                  </div>
+              recentEvents.map((e) => (
+                <div key={e.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3"><div className="bg-blue-100 p-2 rounded-full"><FileText className="h-4 w-4 text-blue-600" /></div><div><h3 className="font-medium text-gray-800">{getEventTitle(e.event)}</h3><p className="text-sm text-gray-600">{getEventDate(e.event?.dateAndTime)}</p></div></div>
+                  <div className="flex items-center gap-2"><span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${e.status === 'completed' ? 'bg-green-100 text-green-800' : e.status === 'slip_uploaded' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>{getStatusText(e.status)}</span>{e.status === 'completed' && (<Award className="h-4 w-4 text-yellow-500" />)}</div>
                 </div>
               ))
             ) : (<p className="text-gray-500 text-center py-4">No events registered yet</p>)}
@@ -382,7 +309,7 @@ const Profile: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Profile Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><div className="flex items-center gap-3 mb-3"><User className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">Personal Info</span></div><div className="space-y-2 text-sm"><p><span className="font-medium">Department:</span> {userProfile.department || 'Not specified'}</p><p><span className="font-medium">Position:</span> {userProfile.position || 'Not specified'}</p><p><span className="font-medium">Joined:</span> {userProfile.joinDate || 'Not specified'}</p></div></div>
+            <div><div className="flex items-center gap-3 mb-3"><User className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">Personal Info</span></div><div className="space-y-2 text-sm"><p><span className="font-medium">Department:</span> {userProfile.department || 'Not specified'}</p><p><span className="font-medium">Bio:</span> {userProfile.bio || 'Not specified'}</p></div></div>
             <div><div className="flex items-center gap-3 mb-3"><TrendingUp className="h-5 w-5 text-gray-600" /><span className="font-medium text-gray-700">Activity Progress</span></div><div className="space-y-2 text-sm"><div className="flex justify-between"><span>Completion Rate</span><span className="font-medium text-green-600">{events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0}%</span></div><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-green-600 h-2 rounded-full" style={{ width: `${events.length > 0 ? (completedEvents.length / events.length) * 100 : 0}%` }}></div></div></div></div>
           </div>
         </div>
@@ -390,32 +317,23 @@ const Profile: React.FC = () => {
     );
   };
 
-  // Profile Tab
+  // (renderProfileTab - ลบ Position/JoinDate)
   const renderProfileTab = () => (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold text-gray-800">Profile Information</h2>{!isEditing ? (<button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"><Edit size={16} />Edit Profile</button>) : (<div className="flex gap-2"><button onClick={handleProfileSave} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"><Save size={16} />Save</button><button onClick={handleProfileCancel} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"><X size={16} />Cancel</button></div>)}</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div><label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>{isEditing ? (<input type="text" value={editedProfile.name} onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.name}</p>)}</div>
         <div><label className="block text-sm font-medium text-gray-700 mb-2">Email</label>{isEditing ? (<input type="email" value={editedProfile.email} onChange={(e) => setEditedProfile({...editedProfile, email: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.email}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>{isEditing ? (<input type="tel" value={editedProfile.phone} onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.phone || 'Not specified'}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label>{isEditing ? (<input type="text" value={editedProfile.department} onChange={(e) => setEditedProfile({...editedProfile, department: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.department || 'Not specified'}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Position</label>{isEditing ? (<input type="text" value={editedProfile.position} onChange={(e) => setEditedProfile({...editedProfile, position: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.position || 'Not specified'}</p>)}</div>
-        <div><label className="block text-sm font-medium text-gray-700 mb-2">Join Date</label><p className="p-3 bg-gray-50 rounded-lg">{userProfile.joinDate || 'Not specified'}</p></div>
-        <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>{isEditing ? (<textarea value={editedProfile.bio} onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.bio || 'No bio provided'}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>{isEditing ? (<input type="tel" value={editedProfile.phone || ''} onChange={(e) => setEditedProfile({...editedProfile, phone: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.phone || 'Not specified'}</p>)}</div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label>{isEditing ? (<input type="text" value={editedProfile.department || ''} onChange={(e) => setEditedProfile({...editedProfile, department: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.department || 'Not specified'}</p>)}</div>
+        <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>{isEditing ? (<textarea value={editedProfile.bio || ''} onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />) : (<p className="p-3 bg-gray-50 rounded-lg">{userProfile.bio || 'No bio provided'}</p>)}</div>
       </div>
     </div>
   );
   
   // ✅ Activity Tab
   const renderActivityTab = () => {
-    const statusColorMap: Record<string, string> = {
-      registered: "bg-gray-100 text-gray-800",
-      slip_uploaded: "bg-yellow-100 text-yellow-800",
-      verified: "bg-blue-100 text-blue-800",
-      exam_ready: "bg-purple-100 text-purple-800",
-      completed: "bg-green-100 text-green-800",
-    };
-
+    const statusColorMap: Record<string, string> = { registered: "bg-gray-100 text-gray-800", slip_uploaded: "bg-yellow-100 text-yellow-800", verified: "bg-blue-100 text-blue-800", exam_ready: "bg-purple-100 text-purple-800", completed: "bg-green-100 text-green-800" };
     const ongoingEvents = events.filter(e => e.status !== "completed");
     const completedEvents = events.filter(e => e.status === "completed");
 
@@ -427,11 +345,9 @@ const Profile: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">Ongoing Events ({ongoingEvents.length})</h3>
           {ongoingEvents.length > 0 ? (
             ongoingEvents.map((e) => (
-              // ‼️ แก้ key เป็น id ‼️
               <div key={e.id} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-start">
                   <div>
-                    {/* ‼️ ใช้ nameEvent และ dateAndTime ‼️ */}
                     <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
                     <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.dateAndTime)}</p>
                     {e.event?.location && (<p className="text-sm text-gray-500">Location: {e.event.location}</p>)}
@@ -459,11 +375,9 @@ const Profile: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">Completed Events ({completedEvents.length})</h3>
           {completedEvents.length > 0 ? (
             completedEvents.map((e) => (
-              // ‼️ แก้ key เป็น id ‼️
               <div key={e.id} className="flex flex-col gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
                 <div className="flex justify-between items-start">
                   <div>
-                    {/* ‼️ ใช้ nameEvent และ dateAndTime ‼️ */}
                     <h4 className="font-medium text-gray-800">{getEventTitle(e.event)}</h4>
                     <p className="text-sm text-gray-600">Date: {getEventDate(e.event?.dateAndTime)}</p>
                     {e.event?.location && (<p className="text-sm text-gray-500">Location: {e.event.location}</p>)}
@@ -472,7 +386,12 @@ const Profile: React.FC = () => {
                       {getStatusText(e.status)}
                     </span>
                   </div>
-                  <button onClick={() => handleCertificateDownloadClick(e.event.id, e.userCode)} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">
+                  {/* --- ‼️ [แก้ไข] ปุ่ม "View Certificate" ‼️ --- */}
+                  {/* (เปลี่ยน onClick ให้ไปที่แท็บ 'certificate' แทน) */}
+                  <button 
+                    onClick={() => setActiveTab('certificate')} 
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+                  >
                     <Award size={16} /> View Certificate
                   </button>
                 </div>
@@ -491,21 +410,19 @@ const Profile: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Certificates</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {events.filter(event => event.status === 'completed').map((event) => (
-            // ‼️ แก้ key เป็น id ‼️
             <div key={event.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center gap-3 mb-4">
                 <Award className="h-8 w-8 text-yellow-500" />
                 <div>
-                  {/* ‼️ ใช้ nameEvent และ dateAndTime ‼️ */}
                   <h3 className="font-semibold text-gray-800">{getEventTitle(event.event)}</h3>
                   <p className="text-sm text-gray-600">Completed on {getEventDate(event.event?.dateAndTime)}</p>
                   {event.event.location && (<p className="text-xs text-gray-500">{event.event.location}</p>)}
                 </div>
               </div>
+              {/* --- ‼️ [ยืนยัน] ปุ่มนี้ทำงานถูกต้อง ‼️ --- */}
+              {/* (ปุ่มนี้จะเรียก Logic การดาวน์โหลด/ทำ Survey) */}
               <button
-                onClick={() => {
-                  handleCertificateDownloadClick(event.event.id, event.userCode); 
-                }}
+                onClick={() => { handleCertificateDownloadClick(event.event.id, event.userCode); }}
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download size={16} />
@@ -521,7 +438,7 @@ const Profile: React.FC = () => {
     );
   };
 
-  // ✅ Survey Modal Component
+  // (renderSurveyModal - เหมือนเดิม)
   const renderSurveyModal = () => {
     if (!showSurveyModal || !currentSurvey) return null;
     return (

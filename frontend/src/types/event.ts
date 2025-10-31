@@ -18,6 +18,7 @@ export interface Event {
   location?: string;
   registrationType: 'individual' | 'school';
   images?: string; // ‼️ ไม่ใช่ image
+  levels?: string[];
   stations: Station[]; // ‼️ ใช้ Station[] ไม่ใช่ ExamSchedule[]
   createdAt?: string; // (Optional)
   updatedAt?: string; // (Optional)

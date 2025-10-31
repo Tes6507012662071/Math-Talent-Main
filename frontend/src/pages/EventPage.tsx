@@ -91,7 +91,7 @@ const EventPage: React.FC = () => {
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
-              การแข่งขัน
+              การสอบ
             </button>
             <button
               onClick={() => setFilter('workshop')}

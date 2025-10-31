@@ -5,11 +5,10 @@ import Footer from "../../components/Footer";
 import axios from "axios";
 import { fetchLandingContent, updateLandingContent, LandingData } from '../../api/landing';
 
-// 1. ✅ ใช้ REACT_APP_API_URL (ไม่มี /api)
+// (API_BASE_URL, Interfaces, ... เหมือนเดิม)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 interface Applicant {
-  // 2. ‼️ เปลี่ยน _id เป็น id ‼️
   id: string; 
   userCode: string;
   fullname: string;
@@ -26,7 +25,6 @@ interface Station {
 }
 
 interface Event {
-  // 3. ‼️ เปลี่ยน _id เป็น id ‼️
   id: string; 
   nameEvent: string;
   detail?: string;
@@ -35,13 +33,14 @@ interface Event {
   registrationType: 'individual' | 'school';
   stations: Station[];
   images?: string;
+  levels?: string[];
 }
 
-const AdminDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const [selectedTopic, setSelectedTopic] = useState("checkSlip"); // เริ่มที่ checkSlip
 
-  // ... (States อื่นๆ เหมือนเดิม)
+const AdminDashboard: React.FC = () => {
+  // ... (States ทั้งหมดเหมือนเดิม) ...
+  const navigate = useNavigate();
+  const [selectedTopic, setSelectedTopic] = useState("checkSlip");
   const [selectedEventUploadPDF, setSelectedEventUploadPDF] = useState("");
   const [selectedEventCheckSlip, setSelectedEventCheckSlip] = useState("");
   const [selectedEventUploadExcel, setSelectedEventUploadExcel] = useState("");
@@ -63,6 +62,7 @@ const AdminDashboard: React.FC = () => {
     nameEvent: '', detail: '', dateAndTime: '', location: '',
     registrationType: 'individual' as 'individual' | 'school',
     stations: [{ stationName: '', address: '', capacity: 0, code: 1 }],
+    levels: [''] 
   });
   const [eventImageFile, setEventImageFile] = useState<File | null>(null);
   const [addEventStatus, setAddEventStatus] = useState('');
@@ -81,6 +81,7 @@ const AdminDashboard: React.FC = () => {
     nameEvent: '', detail: '', dateAndTime: '', location: '',
     registrationType: 'individual' as 'individual' | 'school',
     stations: [] as { stationName: string; address: string; capacity: number; code: number; }[],
+    levels: [] as string[]
   });
   const [surveyTitle, setSurveyTitle] = useState("แบบสอบถามหลังสอบ");
   const [questions, setQuestions] = useState<{ question: string; type: string; options?: string[] }[]>([
@@ -89,6 +90,8 @@ const AdminDashboard: React.FC = () => {
   const [surveyActive, setSurveyActive] = useState(false);
   const [editStatus, setEditStatus] = useState("");
 
+  // ... (ฟังก์ชัน Handlers ทั้งหมด: Survey, saveSurvey, loadEventData, fetchEvents, ...)
+  // ( ... โค้ดส่วน Handlers ... )
   // --- Survey Question Handlers ---
   const addQuestionToAdd = () => setAddQuestions([...addQuestions, { question: "", type: "text" }]);
   const removeQuestionFromAdd = (index: number) => setAddQuestions(addQuestions.filter((_, i) => i !== index));
@@ -148,7 +151,8 @@ const AdminDashboard: React.FC = () => {
           dateAndTime: event.dateAndTime ? new Date(event.dateAndTime).toISOString().slice(0, 16) : '',
           location: event.location || '',
           registrationType: event.registrationType,
-          stations: event.stations?.map(s => ({ stationName: s.stationName, address: s.address, capacity: s.capacity, code: s.code })) || []
+          stations: event.stations?.map(s => ({ stationName: s.stationName, address: s.address, capacity: s.capacity, code: s.code })) || [],
+          levels: event.levels || [] 
         });
         try {
           const surveyRes = await axios.get(`${API_BASE_URL}/api/survey/${selectedEventId}`, {
@@ -220,7 +224,6 @@ const AdminDashboard: React.FC = () => {
     try {
       const token = localStorage.getItem("token"); if (!token) return;
       const res = await axios.patch(`${API_BASE_URL}/api/individual-registration/${applicantId}/status`,
-        // 4. ‼️ แก้ไข Status ให้ตรงกับ Enum Backend ‼️
         { status: "exam_ready" }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -321,6 +324,16 @@ const AdminDashboard: React.FC = () => {
     newStations[index] = { ...newStations[index], [name]: (name === 'capacity' || name === 'code') ? parseInt(value) || 0 : value };
     setAddEventForm(prev => ({ ...prev, stations: newStations }));
   };
+  const handleLevelChange = (index: number, value: string) => {
+    const newLevels = [...addEventForm.levels];
+    newLevels[index] = value;
+    setAddEventForm(prev => ({ ...prev, levels: newLevels }));
+  };
+  const addLevel = () => { setAddEventForm(prev => ({ ...prev, levels: [...prev.levels, ''] })); };
+  const removeLevel = (index: number) => {
+    if (addEventForm.levels.length <= 1) return;
+    setAddEventForm(prev => ({ ...prev, levels: prev.levels.filter((_, i) => i !== index) }));
+  };
   const addStation = () => { setAddEventForm(prev => ({ ...prev, stations: [...prev.stations, { stationName: '', address: '', capacity: 0, code: prev.stations.length + 1 }] })); };
   const removeStation = (index: number) => { const newStations = addEventForm.stations.filter((_, i) => i !== index); setAddEventForm(prev => ({ ...prev, stations: newStations.map((s, i) => ({ ...s, code: i + 1 })) })); };
   const handleAddEventSubmit = async (e: React.FormEvent) => {
@@ -335,14 +348,14 @@ const AdminDashboard: React.FC = () => {
       if (addEventForm.location) formData.append('location', addEventForm.location);
       formData.append('registrationType', addEventForm.registrationType);
       formData.append('stations', JSON.stringify(addEventForm.stations));
+      formData.append('levels', JSON.stringify(addEventForm.levels.filter(l => l.trim() !== ''))); 
       if (eventImageFile) { formData.append('image', eventImageFile); }
       const eventRes = await axios.post(`${API_BASE_URL}/api/events`, formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-      // 5. ‼️ ใช้ id แทน _id ‼️
       const newEventId = eventRes.data.newEvent.id; 
       await saveSurvey(newEventId, { title: addSurveyTitle, questions: validQuestions, isActive: addSurveyActive }, token);
-      setAddEventForm({ nameEvent: '', detail: '', dateAndTime: '', location: '', registrationType: 'individual', stations: [{ stationName: '', address: '', capacity: 0, code: 1 }] });
+      setAddEventForm({ nameEvent: '', detail: '', dateAndTime: '', location: '', registrationType: 'individual', stations: [{ stationName: '', address: '', capacity: 0, code: 1 }], levels: [''] });
       setEventImageFile(null); setAddSurveyTitle("แบบสอบถามหลังสอบ"); setAddQuestions([{ question: "", type: "text" }]); setAddSurveyActive(true);
       setAddEventStatus('✅ สร้างเหตุการณ์และแบบสอบถามสำเร็จ!');
       const eventsRes = await axios.get(`${API_BASE_URL}/api/events`, { headers: { Authorization: `Bearer ${token}` } });
@@ -354,13 +367,14 @@ const AdminDashboard: React.FC = () => {
    const token = localStorage.getItem("token"); if (!token || !selectedEventId) return;
    try {
      setEditStatus("กำลังบันทึก...");
-     const formData = new FormData(); formData.append('nameEvent', editEventForm.nameEvent);
+     const formData = new FormData(); 
+     formData.append('nameEvent', editEventForm.nameEvent);
      if (editEventForm.detail) formData.append('detail', editEventForm.detail);
      formData.append('dateAndTime', new Date(editEventForm.dateAndTime).toISOString());
      if (editEventForm.location) formData.append('location', editEventForm.location);
      formData.append('registrationType', editEventForm.registrationType);
      formData.append('stations', JSON.stringify(editEventForm.stations));
-     // (Note: ไม่ได้ส่งรูปภาพตอน Edit ถ้าต้องการ ต้องเพิ่ม field 'eventImageFile' state)
+     formData.append('levels', JSON.stringify(editEventForm.levels.filter(l => l.trim() !== ''))); 
      await axios.patch(`${API_BASE_URL}/api/events/${selectedEventId}`, formData, {
        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
      });
@@ -388,7 +402,8 @@ const AdminDashboard: React.FC = () => {
 
       case "checkSlip":
         const pendingApplicants = applicants.filter(app => app.status === "slip_uploaded");
-        const approvedApplicants = applicants.filter(app => ["exam_ready", "completed"].includes(app.status));
+        // ‼️ [แก้ไข] Filter เอา 'completed' ออก ‼️
+        const approvedApplicants = applicants.filter(app => app.status === "exam_ready");
         return (
           <section>
             <h2 className="font-semibold mb-3">2. ตรวจสอบสลิปผู้สมัคร</h2>
@@ -396,9 +411,46 @@ const AdminDashboard: React.FC = () => {
               <option value="">-- เลือกกิจกรรม --</option>
               {events.map((ev) => ( <option key={ev.id} value={ev.id}>{ev.nameEvent}</option> ))}
             </select>
-            {selectedEventCheckSlip && applicants.length > 0 ? (
+
+            {/* --- ‼️ [เพิ่มใหม่] ปุ่ม Export รายชื่อ --- */}
+            {selectedEventCheckSlip && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const token = localStorage.getItem('token');
+                  if (!token) return;
+                  try {
+                    const res = await axios.get(
+                      `${API_BASE_URL}/api/export/applicants/${selectedEventCheckSlip}`,
+                      { 
+                        headers: { Authorization: `Bearer ${token}` },
+                        responseType: 'blob'
+                      }
+                    );
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `applicants_export_${selectedEventCheckSlip}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  } catch (err: any) {
+                    console.error("Export failed:", err);
+                    const errorText = await (err.response?.data as Blob)?.text();
+                    const errorJson = JSON.parse(errorText || '{}');
+                    alert("Export ล้มเหลว: " + (errorJson.message || err.message));
+                  }
+                }}
+                className="ml-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium"
+              >
+                📤 Export รายชื่อ (Excel)
+              </button>
+            )}
+            {/* --- จบส่วนปุ่ม Export --- */}
+
+            {selectedEventCheckSlip && (applicants.length > 0 || pendingApplicants.length > 0) ? (
               <>
-                <p className="font-medium mb-4">Event: {eventNameCheckSlip}</p>
+                <p className="font-medium mb-4 mt-4">Event: {eventNameCheckSlip}</p>
                 <div className="mb-8">
                   <h3 className="font-semibold mb-2 text-lg">รอตรวจสอบสลิป ({pendingApplicants.length})</h3>
                   {pendingApplicants.length > 0 ? (
@@ -406,12 +458,10 @@ const AdminDashboard: React.FC = () => {
                       <thead><tr className="bg-gray-200"><th className="border p-2">รหัสผู้สมัคร</th><th className="border p-2">ชื่อ-นามสกุล</th><th className="border p-2">อีเมล</th><th className="border p-2">สถานะ</th><th className="border p-2">สลิป</th><th className="border p-2">อัปเดตสถานะ</th></tr></thead>
                       <tbody>
                         {pendingApplicants.map((app) => (
-                          // 6. ‼️ แก้ key เป็น id ‼️
                           <tr key={app.id} className="hover:bg-gray-100">
                             <td className="border p-2">{app.userCode || "-"}</td> <td className="border p-2">{app.fullname || "-"}</td> <td className="border p-2">{app.email || "-"}</td>
                             <td className="border p-2"><span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">{app.status}</span></td>
                             <td className="border p-2">
-                              {/* 7. ‼️ แก้ไข URL สลิป และ onClick ‼️ */}
                               {app.slipUrl ? ( app.slipUrl.endsWith(".pdf") ? (
                                 <button className="text-blue-600 underline" onClick={() => { const fullUrl = app.slipUrl ? `${API_BASE_URL}${app.slipUrl}` : null; setSelectedSlipUrl(fullUrl); }}> ดูสลิป (PDF) </button>
                               ) : (
@@ -432,12 +482,10 @@ const AdminDashboard: React.FC = () => {
                       <thead><tr className="bg-green-100"><th className="border p-2">รหัสผู้สมัคร</th><th className="border p-2">ชื่อ-นามสกุล</th><th className="border p-2">อีเมล</th><th className="border p-2">สถานะ</th><th className="border p-2">สลิป</th></tr></thead>
                       <tbody>
                         {approvedApplicants.map((app) => (
-                          // 8. ‼️ แก้ key เป็น id ‼️
                           <tr key={app.id} className="hover:bg-gray-100">
                             <td className="border p-2">{app.userCode || "-"}</td> <td className="border p-2">{app.fullname || "-"}</td> <td className="border p-2">{app.email || "-"}</td>
                             <td className="border p-2"><span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">{app.status}</span></td>
                             <td className="border p-2">
-                              {/* 9. ‼️ แก้ไข URL สลิป และ onClick ‼️ */}
                               {app.slipUrl ? ( app.slipUrl.endsWith(".pdf") ? (
                                 <button className="text-blue-600 underline" onClick={() => { const fullUrl = app.slipUrl ? `${API_BASE_URL}${app.slipUrl}` : null; setSelectedSlipUrl(fullUrl); }}>ดูสลิป (PDF)</button>
                               ) : (
@@ -448,7 +496,7 @@ const AdminDashboard: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
-                  ) : (<p className="text-gray-500">ยังไม่มีผู้สมัครที่ได้รับการอนุมัติ</p>)}
+                  ) : (<p className="text-gray-500">ยังไม่มีผู้สมัครที่ได้รับการอนุมัติ (สถานะ "exam_ready")</p>)}
                 </div>
               </>
             ) : selectedEventCheckSlip ? (<p className="text-gray-500">ไม่พบผู้สมัครในกิจกรรมนี้</p>) : null}
@@ -515,7 +563,6 @@ const AdminDashboard: React.FC = () => {
                 {loadingCertificates ? (<p className="text-gray-500">⏳ กำลังโหลด...</p>) : certificates.length === 0 ? (<p className="text-red-500">ยังไม่มีการอัปโหลด Certificate</p>) : (
                   <ul className="space-y-2">
                     {certificates.map((cert) => (
-                      // 10. ‼️ แก้ key เป็น id และ แก้ URL ‼️
                       <li key={cert.id} className="flex justify-between items-center border p-2 rounded">
                         <span>{cert.userCode}</span>
                         <a href={`${API_BASE_URL}${cert.certificateUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">Download</a>
@@ -566,6 +613,44 @@ const AdminDashboard: React.FC = () => {
               <div><label className="block mb-2 font-medium">สถานที่หลัก (จังหวัด/เขต)</label><input type="text" name="location" value={addEventForm.location} onChange={handleAddEventChange} className="w-full p-2 border rounded" /></div>
               <div><label className="block mb-2 font-medium">รูปภาพเหตุการณ์</label><input type="file" accept="image/*" onChange={(e) => setEventImageFile(e.target.files?.[0] || null)} className="w-full p-2 border rounded" />{eventImageFile && (<div className="mt-2 text-sm text-gray-600">📎 {eventImageFile.name} ({(eventImageFile.size / 1024 / 1024).toFixed(2)} MB)</div>)}</div>
               <div><label className="block mb-2 font-medium">ประเภทการสมัคร</label><select name="registrationType" value={addEventForm.registrationType} onChange={handleAddEventChange} className="w-full p-2 border rounded"><option value="individual">บุคคลทั่วไป</option><option value="school">โรงเรียน</option></select></div>
+              
+              {/* --- ‼️ [เพิ่มใหม่] ส่วนจัดการระดับชั้น --- */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">📚 ระดับชั้นที่เปิดสอบ</h3>
+                  <button
+                    type="button"
+                    onClick={addLevel}
+                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                  >
+                    + เพิ่มระดับ
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {addEventForm.levels.map((level, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="เช่น ประถมศึกษาตอนปลาย"
+                        value={level}
+                        onChange={(e) => handleLevelChange(index, e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                      {addEventForm.levels.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLevel(index)}
+                          className="bg-red-500 text-white px-3 rounded hover:bg-red-600"
+                        >
+                          ลบ
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* --- จบส่วน Levels --- */}
+
               <div>
                 <div className="flex justify-between items-center mb-3"><h3 className="font-medium">📍 ศูนย์สอบ</h3><button type="button" onClick={addStation} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ เพิ่มศูนย์สอบ</button></div>
                 {addEventForm.stations.map((station, index) => (
@@ -575,7 +660,7 @@ const AdminDashboard: React.FC = () => {
                       <div><label className="block mb-1 text-sm">ชื่อศูนย์สอบ *</label><input type="text" name="stationName" value={station.stationName} onChange={(e) => handleStationChange(index, e)} className="w-full p-2 border rounded" required /></div>
                       <div><label className="block mb-1 text-sm">ที่อยู่ *</label><input type="text" name="address" value={station.address} onChange={(e) => handleStationChange(index, e)} className="w-full p-2 border rounded" required /></div>
                       <div><label className="block mb-1 text-sm">ความจุ (คน) *</label><input type="number" name="capacity" value={station.capacity} onChange={(e) => handleStationChange(index, e)} min="0" className="w-full p-2 border rounded" required /></div>
-                      <div><label className="block mb-1 text-sm">รหัสศูนย์</label><input type="number" value={station.code} className="w-full p-2 border rounded bg-gray-200" readOnly /></div>
+                      <div><label className="block mb-1 text-sm">รหัสศูนย์</label><input type="number" name="code" value={station.code} onChange={(e) => handleStationChange(index, e)} className="w-full p-2 border rounded" /></div>
                     </div>
                   </div>
                 ))}
@@ -619,6 +704,53 @@ const AdminDashboard: React.FC = () => {
                     <div><label className="block mb-1">วันที่และเวลา</label><input type="datetime-local" value={editEventForm.dateAndTime} onChange={(e) => setEditEventForm(prev => ({ ...prev, dateAndTime: e.target.value }))} className="w-full p-2 border rounded" /></div>
                     <div><label className="block mb-1">สถานที่</label><input type="text" value={editEventForm.location} onChange={(e) => setEditEventForm(prev => ({ ...prev, location: e.target.value }))} className="w-full p-2 border rounded" /></div>
                     <div><label className="block mb-1">ประเภทการสมัคร</label><select value={editEventForm.registrationType} onChange={(e) => setEditEventForm(prev => ({ ...prev, registrationType: e.target.value as 'individual' | 'school' }))} className="w-full p-2 border rounded"><option value="individual">บุคคลทั่วไป</option><option value="school">โรงเรียน</option></select></div>
+                    
+                    {/* --- ‼️ [เพิ่มใหม่] ส่วนแก้ไข Levels --- */}
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-medium">📚 ระดับชั้นที่เปิดสอบ</h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditEventForm(prev => ({
+                            ...prev, levels: [...(prev.levels || []), ''] // 👈 (แก้)
+                          }))}
+                          className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        >
+                          + เพิ่มระดับ
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {editEventForm.levels.map((level, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="เช่น ประถมศึกษาตอนปลาย"
+                              value={level}
+                              onChange={(e) => {
+                                const newLevels = [...editEventForm.levels];
+                                newLevels[index] = e.target.value;
+                                setEditEventForm(prev => ({ ...prev, levels: newLevels }));
+                              }}
+                              className="w-full p-2 border rounded"
+                            />
+                            {editEventForm.levels.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setEditEventForm(prev => ({
+                                  ...prev,
+                                  levels: prev.levels.filter((_, i) => i !== index)
+                                }))}
+                                className="bg-red-500 text-white px-3 rounded hover:bg-red-600"
+                              >
+                                ลบ
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* --- จบส่วน Levels --- */}
+
                     <div>
                       <div className="flex justify-between items-center mb-2"><h4 className="font-medium">ศูนย์สอบ</h4><button type="button" onClick={() => { setEditEventForm(prev => ({ ...prev, stations: [...prev.stations, { stationName: '', address: '', capacity: 0, code: prev.stations.length + 1 }] })); }} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ เพิ่มศูนย์สอบ</button></div>
                       {editEventForm.stations.map((station, index) => (
@@ -653,7 +785,62 @@ const AdminDashboard: React.FC = () => {
                     ))}
                   </div>
                   <div className="flex items-center p-3 bg-white rounded border mb-4"><input type="checkbox" id="isActiveEdit" checked={surveyActive} onChange={(e) => setSurveyActive(e.target.checked)} className="mr-2 w-4 h-4" /><label htmlFor="isActiveEdit" className="cursor-pointer">เปิดให้ผู้สมัครกรอกแบบสอบถามหลังสอบ</label></div>
-                  <div className="flex gap-3"><button onClick={handleSaveAll} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium">💾 บันทึกทั้งหมด</button><button onClick={handleSaveSurvey} className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium">📋 บันทึกเฉพาะแบบสอบถาม</button></div>
+                  
+                  {/* --- ‼️ [เพิ่มใหม่] ปุ่ม Export --- */}
+                  <div className="flex gap-3 pt-4 border-t mt-4">
+                    <button
+                      onClick={handleSaveAll}
+                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium"
+                    >
+                      💾 บันทึกทั้งหมด
+                    </button>
+                    <button
+                      onClick={handleSaveSurvey}
+                      className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium"
+                    >
+                      📋 บันทึกเฉพาะแบบสอบถาม
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+                        try {
+                          setEditStatus("กำลัง Export...");
+                          const res = await axios.get(
+                            `${API_BASE_URL}/api/export/survey/${selectedEventId}`,
+                            { 
+                              headers: { Authorization: `Bearer ${token}` },
+                              responseType: 'blob' // ⬅️ (สำคัญ)
+                            }
+                          );
+                          const url = window.URL.createObjectURL(new Blob([res.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', `survey_export_${selectedEventId}.xlsx`);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                          setEditStatus("Export สำเร็จ!");
+                        } catch (err: any) {
+                          console.error("Export failed:", err);
+                          // ‼️ [แก้ไข] อ่าน Error จาก Blob ‼️
+                          try {
+                            const errorText = await (err.response?.data as Blob)?.text();
+                            const errorJson = JSON.parse(errorText || '{}');
+                            setEditStatus(`❌ Export ล้มเหลว: ${errorJson.message || 'ไม่พบข้อมูล Survey'}`);
+                          } catch (parseError) {
+                             setEditStatus(`❌ Export ล้มเหลว: ${err.message || 'ไม่ทราบสาเหตุ'}`);
+                          }
+                        }
+                      }}
+                      className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800 font-medium ml-auto"
+                    >
+                      📤 Export Survey (Excel)
+                    </button>
+                  </div>
+                  {/* --- จบส่วน Export --- */}
+
                 </div>
               </>
             )}

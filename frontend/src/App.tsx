@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import About from "./pages/About";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import SolutionPage from "./pages/SolutionPage";
 
 const App: React.FC = () => {
   return (
@@ -24,6 +25,7 @@ const App: React.FC = () => {
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/about" element={<About />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/solution" element={<SolutionPage />} />
         
         {/* Protected Routes */}
         <Route 

@@ -48,6 +48,9 @@ model User {
   email                   String                   @unique
   password                String
   role                    Role                     @default(user)
+  phone                   String?  
+  department              String? 
+  bio                     String?                  @db.Text
   
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -107,6 +110,7 @@ model Event {
   dateAndTime             DateTime
   location                String?
   images                  String?
+  levels                  Json?
   
   registrationType        RegistrationType         @default(individual)
   code                    String
@@ -114,10 +118,12 @@ model Event {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
 
+
   // Relationships
   stations                Station[]
   individualRegistrations IndividualRegistration[]
   surveyResponses         SurveyResponse[]
+  solutions               Solution[]
 }
 
 // Survey Question Model
@@ -209,6 +215,7 @@ model Counter {
 // Solution Model
 model Solution {
   id         String   @id @default(cuid())
+  event      Event    @relation(fields: [eventId], references: [id])
   eventId    String
   fileUrl    String
   uploadedAt DateTime @default(now())

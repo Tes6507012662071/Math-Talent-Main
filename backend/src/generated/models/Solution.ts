@@ -173,6 +173,7 @@ export type SolutionWhereInput = {
   eventId?: Prisma.StringFilter<"Solution"> | string
   fileUrl?: Prisma.StringFilter<"Solution"> | string
   uploadedAt?: Prisma.DateTimeFilter<"Solution"> | Date | string
+  event?: Prisma.XOR<Prisma.EventScalarRelationFilter, Prisma.EventWhereInput>
 }
 
 export type SolutionOrderByWithRelationInput = {
@@ -180,6 +181,7 @@ export type SolutionOrderByWithRelationInput = {
   eventId?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
+  event?: Prisma.EventOrderByWithRelationInput
   _relevance?: Prisma.SolutionOrderByRelevanceInput
 }
 
@@ -191,6 +193,7 @@ export type SolutionWhereUniqueInput = Prisma.AtLeast<{
   eventId?: Prisma.StringFilter<"Solution"> | string
   fileUrl?: Prisma.StringFilter<"Solution"> | string
   uploadedAt?: Prisma.DateTimeFilter<"Solution"> | Date | string
+  event?: Prisma.XOR<Prisma.EventScalarRelationFilter, Prisma.EventWhereInput>
 }, "id">
 
 export type SolutionOrderByWithAggregationInput = {
@@ -215,9 +218,9 @@ export type SolutionScalarWhereWithAggregatesInput = {
 
 export type SolutionCreateInput = {
   id?: string
-  eventId: string
   fileUrl: string
   uploadedAt?: Date | string
+  event: Prisma.EventCreateNestedOneWithoutSolutionsInput
 }
 
 export type SolutionUncheckedCreateInput = {
@@ -229,9 +232,9 @@ export type SolutionUncheckedCreateInput = {
 
 export type SolutionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  eventId?: Prisma.StringFieldUpdateOperationsInput | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  event?: Prisma.EventUpdateOneRequiredWithoutSolutionsNestedInput
 }
 
 export type SolutionUncheckedUpdateInput = {
@@ -250,7 +253,6 @@ export type SolutionCreateManyInput = {
 
 export type SolutionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  eventId?: Prisma.StringFieldUpdateOperationsInput | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -260,6 +262,16 @@ export type SolutionUncheckedUpdateManyInput = {
   eventId?: Prisma.StringFieldUpdateOperationsInput | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SolutionListRelationFilter = {
+  every?: Prisma.SolutionWhereInput
+  some?: Prisma.SolutionWhereInput
+  none?: Prisma.SolutionWhereInput
+}
+
+export type SolutionOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type SolutionOrderByRelevanceInput = {
@@ -289,6 +301,120 @@ export type SolutionMinOrderByAggregateInput = {
   uploadedAt?: Prisma.SortOrder
 }
 
+export type SolutionCreateNestedManyWithoutEventInput = {
+  create?: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput> | Prisma.SolutionCreateWithoutEventInput[] | Prisma.SolutionUncheckedCreateWithoutEventInput[]
+  connectOrCreate?: Prisma.SolutionCreateOrConnectWithoutEventInput | Prisma.SolutionCreateOrConnectWithoutEventInput[]
+  createMany?: Prisma.SolutionCreateManyEventInputEnvelope
+  connect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+}
+
+export type SolutionUncheckedCreateNestedManyWithoutEventInput = {
+  create?: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput> | Prisma.SolutionCreateWithoutEventInput[] | Prisma.SolutionUncheckedCreateWithoutEventInput[]
+  connectOrCreate?: Prisma.SolutionCreateOrConnectWithoutEventInput | Prisma.SolutionCreateOrConnectWithoutEventInput[]
+  createMany?: Prisma.SolutionCreateManyEventInputEnvelope
+  connect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+}
+
+export type SolutionUpdateManyWithoutEventNestedInput = {
+  create?: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput> | Prisma.SolutionCreateWithoutEventInput[] | Prisma.SolutionUncheckedCreateWithoutEventInput[]
+  connectOrCreate?: Prisma.SolutionCreateOrConnectWithoutEventInput | Prisma.SolutionCreateOrConnectWithoutEventInput[]
+  upsert?: Prisma.SolutionUpsertWithWhereUniqueWithoutEventInput | Prisma.SolutionUpsertWithWhereUniqueWithoutEventInput[]
+  createMany?: Prisma.SolutionCreateManyEventInputEnvelope
+  set?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  disconnect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  delete?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  connect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  update?: Prisma.SolutionUpdateWithWhereUniqueWithoutEventInput | Prisma.SolutionUpdateWithWhereUniqueWithoutEventInput[]
+  updateMany?: Prisma.SolutionUpdateManyWithWhereWithoutEventInput | Prisma.SolutionUpdateManyWithWhereWithoutEventInput[]
+  deleteMany?: Prisma.SolutionScalarWhereInput | Prisma.SolutionScalarWhereInput[]
+}
+
+export type SolutionUncheckedUpdateManyWithoutEventNestedInput = {
+  create?: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput> | Prisma.SolutionCreateWithoutEventInput[] | Prisma.SolutionUncheckedCreateWithoutEventInput[]
+  connectOrCreate?: Prisma.SolutionCreateOrConnectWithoutEventInput | Prisma.SolutionCreateOrConnectWithoutEventInput[]
+  upsert?: Prisma.SolutionUpsertWithWhereUniqueWithoutEventInput | Prisma.SolutionUpsertWithWhereUniqueWithoutEventInput[]
+  createMany?: Prisma.SolutionCreateManyEventInputEnvelope
+  set?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  disconnect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  delete?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  connect?: Prisma.SolutionWhereUniqueInput | Prisma.SolutionWhereUniqueInput[]
+  update?: Prisma.SolutionUpdateWithWhereUniqueWithoutEventInput | Prisma.SolutionUpdateWithWhereUniqueWithoutEventInput[]
+  updateMany?: Prisma.SolutionUpdateManyWithWhereWithoutEventInput | Prisma.SolutionUpdateManyWithWhereWithoutEventInput[]
+  deleteMany?: Prisma.SolutionScalarWhereInput | Prisma.SolutionScalarWhereInput[]
+}
+
+export type SolutionCreateWithoutEventInput = {
+  id?: string
+  fileUrl: string
+  uploadedAt?: Date | string
+}
+
+export type SolutionUncheckedCreateWithoutEventInput = {
+  id?: string
+  fileUrl: string
+  uploadedAt?: Date | string
+}
+
+export type SolutionCreateOrConnectWithoutEventInput = {
+  where: Prisma.SolutionWhereUniqueInput
+  create: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput>
+}
+
+export type SolutionCreateManyEventInputEnvelope = {
+  data: Prisma.SolutionCreateManyEventInput | Prisma.SolutionCreateManyEventInput[]
+  skipDuplicates?: boolean
+}
+
+export type SolutionUpsertWithWhereUniqueWithoutEventInput = {
+  where: Prisma.SolutionWhereUniqueInput
+  update: Prisma.XOR<Prisma.SolutionUpdateWithoutEventInput, Prisma.SolutionUncheckedUpdateWithoutEventInput>
+  create: Prisma.XOR<Prisma.SolutionCreateWithoutEventInput, Prisma.SolutionUncheckedCreateWithoutEventInput>
+}
+
+export type SolutionUpdateWithWhereUniqueWithoutEventInput = {
+  where: Prisma.SolutionWhereUniqueInput
+  data: Prisma.XOR<Prisma.SolutionUpdateWithoutEventInput, Prisma.SolutionUncheckedUpdateWithoutEventInput>
+}
+
+export type SolutionUpdateManyWithWhereWithoutEventInput = {
+  where: Prisma.SolutionScalarWhereInput
+  data: Prisma.XOR<Prisma.SolutionUpdateManyMutationInput, Prisma.SolutionUncheckedUpdateManyWithoutEventInput>
+}
+
+export type SolutionScalarWhereInput = {
+  AND?: Prisma.SolutionScalarWhereInput | Prisma.SolutionScalarWhereInput[]
+  OR?: Prisma.SolutionScalarWhereInput[]
+  NOT?: Prisma.SolutionScalarWhereInput | Prisma.SolutionScalarWhereInput[]
+  id?: Prisma.StringFilter<"Solution"> | string
+  eventId?: Prisma.StringFilter<"Solution"> | string
+  fileUrl?: Prisma.StringFilter<"Solution"> | string
+  uploadedAt?: Prisma.DateTimeFilter<"Solution"> | Date | string
+}
+
+export type SolutionCreateManyEventInput = {
+  id?: string
+  fileUrl: string
+  uploadedAt?: Date | string
+}
+
+export type SolutionUpdateWithoutEventInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SolutionUncheckedUpdateWithoutEventInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SolutionUncheckedUpdateManyWithoutEventInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type SolutionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -296,6 +422,7 @@ export type SolutionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   eventId?: boolean
   fileUrl?: boolean
   uploadedAt?: boolean
+  event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["solution"]>
 
 
@@ -308,10 +435,15 @@ export type SolutionSelectScalar = {
 }
 
 export type SolutionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventId" | "fileUrl" | "uploadedAt", ExtArgs["result"]["solution"]>
+export type SolutionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
+}
 
 export type $SolutionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Solution"
-  objects: {}
+  objects: {
+    event: Prisma.$EventPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     eventId: string
@@ -657,6 +789,7 @@ readonly fields: SolutionFieldRefs;
  */
 export interface Prisma__SolutionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  event<T extends Prisma.EventDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EventDefaultArgs<ExtArgs>>): Prisma.Prisma__EventClient<runtime.Types.Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -707,6 +840,10 @@ export type SolutionFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * Filter, which Solution to fetch.
    */
   where: Prisma.SolutionWhereUniqueInput
@@ -725,6 +862,10 @@ export type SolutionFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * Filter, which Solution to fetch.
    */
   where: Prisma.SolutionWhereUniqueInput
@@ -742,6 +883,10 @@ export type SolutionFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the Solution
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
   /**
    * Filter, which Solution to fetch.
    */
@@ -791,6 +936,10 @@ export type SolutionFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * Filter, which Solution to fetch.
    */
   where?: Prisma.SolutionWhereInput
@@ -839,6 +988,10 @@ export type SolutionFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * Filter, which Solutions to fetch.
    */
   where?: Prisma.SolutionWhereInput
@@ -882,6 +1035,10 @@ export type SolutionCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * The data needed to create a Solution.
    */
   data: Prisma.XOR<Prisma.SolutionCreateInput, Prisma.SolutionUncheckedCreateInput>
@@ -910,6 +1067,10 @@ export type SolutionUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Solution
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
   /**
    * The data needed to update a Solution.
    */
@@ -951,6 +1112,10 @@ export type SolutionUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  /**
    * The filter to search for the Solution to update in case it exists.
    */
   where: Prisma.SolutionWhereUniqueInput
@@ -976,6 +1141,10 @@ export type SolutionDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Solution
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
   /**
    * Filter which Solution to delete.
    */
@@ -1008,4 +1177,8 @@ export type SolutionDefaultArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the Solution
    */
   omit?: Prisma.SolutionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
 }

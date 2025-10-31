@@ -131,6 +131,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto flex justify-center items-center gap-20 text-white font-medium flex-col md:flex-row text-center md:text-left">
           <a href="/" className="hover:underline hover:text-gray-200 transition-colors">หน้าหลัก</a>
           <a href="/events" className="hover:underline hover:text-gray-200 transition-colors">กิจกรรม</a>
+          <a href="/solution" className="hover:underline hover:text-gray-200 transition-colors">เฉลยข้อสอบ</a>
           <a href="/about" className="hover:underline hover:text-gray-200 transition-colors">เกี่ยวกับ</a>
         </div>
       </div>

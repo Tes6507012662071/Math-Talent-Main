@@ -56,6 +56,7 @@ export type EventCountAggregateOutputType = {
   dateAndTime: number
   location: number
   images: number
+  levels: number
   registrationType: number
   code: number
   createdAt: number
@@ -97,6 +98,7 @@ export type EventCountAggregateInputType = {
   dateAndTime?: true
   location?: true
   images?: true
+  levels?: true
   registrationType?: true
   code?: true
   createdAt?: true
@@ -183,6 +185,7 @@ export type EventGroupByOutputType = {
   dateAndTime: Date
   location: string | null
   images: string | null
+  levels: runtime.JsonValue | null
   registrationType: $Enums.RegistrationType
   code: string
   createdAt: Date
@@ -217,6 +220,7 @@ export type EventWhereInput = {
   dateAndTime?: Prisma.DateTimeFilter<"Event"> | Date | string
   location?: Prisma.StringNullableFilter<"Event"> | string | null
   images?: Prisma.StringNullableFilter<"Event"> | string | null
+  levels?: Prisma.JsonNullableFilter<"Event">
   registrationType?: Prisma.EnumRegistrationTypeFilter<"Event"> | $Enums.RegistrationType
   code?: Prisma.StringFilter<"Event"> | string
   createdAt?: Prisma.DateTimeFilter<"Event"> | Date | string
@@ -224,6 +228,7 @@ export type EventWhereInput = {
   stations?: Prisma.StationListRelationFilter
   individualRegistrations?: Prisma.IndividualRegistrationListRelationFilter
   surveyResponses?: Prisma.SurveyResponseListRelationFilter
+  solutions?: Prisma.SolutionListRelationFilter
 }
 
 export type EventOrderByWithRelationInput = {
@@ -233,6 +238,7 @@ export type EventOrderByWithRelationInput = {
   dateAndTime?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   images?: Prisma.SortOrderInput | Prisma.SortOrder
+  levels?: Prisma.SortOrderInput | Prisma.SortOrder
   registrationType?: Prisma.SortOrder
   code?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -240,6 +246,7 @@ export type EventOrderByWithRelationInput = {
   stations?: Prisma.StationOrderByRelationAggregateInput
   individualRegistrations?: Prisma.IndividualRegistrationOrderByRelationAggregateInput
   surveyResponses?: Prisma.SurveyResponseOrderByRelationAggregateInput
+  solutions?: Prisma.SolutionOrderByRelationAggregateInput
   _relevance?: Prisma.EventOrderByRelevanceInput
 }
 
@@ -253,6 +260,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   dateAndTime?: Prisma.DateTimeFilter<"Event"> | Date | string
   location?: Prisma.StringNullableFilter<"Event"> | string | null
   images?: Prisma.StringNullableFilter<"Event"> | string | null
+  levels?: Prisma.JsonNullableFilter<"Event">
   registrationType?: Prisma.EnumRegistrationTypeFilter<"Event"> | $Enums.RegistrationType
   code?: Prisma.StringFilter<"Event"> | string
   createdAt?: Prisma.DateTimeFilter<"Event"> | Date | string
@@ -260,6 +268,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   stations?: Prisma.StationListRelationFilter
   individualRegistrations?: Prisma.IndividualRegistrationListRelationFilter
   surveyResponses?: Prisma.SurveyResponseListRelationFilter
+  solutions?: Prisma.SolutionListRelationFilter
 }, "id">
 
 export type EventOrderByWithAggregationInput = {
@@ -269,6 +278,7 @@ export type EventOrderByWithAggregationInput = {
   dateAndTime?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   images?: Prisma.SortOrderInput | Prisma.SortOrder
+  levels?: Prisma.SortOrderInput | Prisma.SortOrder
   registrationType?: Prisma.SortOrder
   code?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -288,6 +298,7 @@ export type EventScalarWhereWithAggregatesInput = {
   dateAndTime?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
   location?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   images?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
+  levels?: Prisma.JsonNullableWithAggregatesFilter<"Event">
   registrationType?: Prisma.EnumRegistrationTypeWithAggregatesFilter<"Event"> | $Enums.RegistrationType
   code?: Prisma.StringWithAggregatesFilter<"Event"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
@@ -301,6 +312,7 @@ export type EventCreateInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
@@ -308,6 +320,7 @@ export type EventCreateInput = {
   stations?: Prisma.StationCreateNestedManyWithoutEventInput
   individualRegistrations?: Prisma.IndividualRegistrationCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateInput = {
@@ -317,6 +330,7 @@ export type EventUncheckedCreateInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
@@ -324,6 +338,7 @@ export type EventUncheckedCreateInput = {
   stations?: Prisma.StationUncheckedCreateNestedManyWithoutEventInput
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseUncheckedCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventUpdateInput = {
@@ -333,6 +348,7 @@ export type EventUpdateInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -340,6 +356,7 @@ export type EventUpdateInput = {
   stations?: Prisma.StationUpdateManyWithoutEventNestedInput
   individualRegistrations?: Prisma.IndividualRegistrationUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateInput = {
@@ -349,6 +366,7 @@ export type EventUncheckedUpdateInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -356,6 +374,7 @@ export type EventUncheckedUpdateInput = {
   stations?: Prisma.StationUncheckedUpdateManyWithoutEventNestedInput
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUncheckedUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateManyInput = {
@@ -365,6 +384,7 @@ export type EventCreateManyInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
@@ -378,6 +398,7 @@ export type EventUpdateManyMutationInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -391,6 +412,7 @@ export type EventUncheckedUpdateManyInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -415,6 +437,7 @@ export type EventCountOrderByAggregateInput = {
   dateAndTime?: Prisma.SortOrder
   location?: Prisma.SortOrder
   images?: Prisma.SortOrder
+  levels?: Prisma.SortOrder
   registrationType?: Prisma.SortOrder
   code?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -493,6 +516,20 @@ export type EventUpdateOneRequiredWithoutSurveyResponsesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EventUpdateToOneWithWhereWithoutSurveyResponsesInput, Prisma.EventUpdateWithoutSurveyResponsesInput>, Prisma.EventUncheckedUpdateWithoutSurveyResponsesInput>
 }
 
+export type EventCreateNestedOneWithoutSolutionsInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutSolutionsInput, Prisma.EventUncheckedCreateWithoutSolutionsInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutSolutionsInput
+  connect?: Prisma.EventWhereUniqueInput
+}
+
+export type EventUpdateOneRequiredWithoutSolutionsNestedInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutSolutionsInput, Prisma.EventUncheckedCreateWithoutSolutionsInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutSolutionsInput
+  upsert?: Prisma.EventUpsertWithoutSolutionsInput
+  connect?: Prisma.EventWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EventUpdateToOneWithWhereWithoutSolutionsInput, Prisma.EventUpdateWithoutSolutionsInput>, Prisma.EventUncheckedUpdateWithoutSolutionsInput>
+}
+
 export type EventCreateWithoutIndividualRegistrationsInput = {
   id?: string
   nameEvent: string
@@ -500,12 +537,14 @@ export type EventCreateWithoutIndividualRegistrationsInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   stations?: Prisma.StationCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutIndividualRegistrationsInput = {
@@ -515,12 +554,14 @@ export type EventUncheckedCreateWithoutIndividualRegistrationsInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   stations?: Prisma.StationUncheckedCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseUncheckedCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutIndividualRegistrationsInput = {
@@ -546,12 +587,14 @@ export type EventUpdateWithoutIndividualRegistrationsInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stations?: Prisma.StationUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutIndividualRegistrationsInput = {
@@ -561,12 +604,14 @@ export type EventUncheckedUpdateWithoutIndividualRegistrationsInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stations?: Prisma.StationUncheckedUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUncheckedUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateWithoutStationsInput = {
@@ -576,12 +621,14 @@ export type EventCreateWithoutStationsInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   individualRegistrations?: Prisma.IndividualRegistrationCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutStationsInput = {
@@ -591,12 +638,14 @@ export type EventUncheckedCreateWithoutStationsInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedCreateNestedManyWithoutEventInput
   surveyResponses?: Prisma.SurveyResponseUncheckedCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutStationsInput = {
@@ -622,12 +671,14 @@ export type EventUpdateWithoutStationsInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   individualRegistrations?: Prisma.IndividualRegistrationUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutStationsInput = {
@@ -637,12 +688,14 @@ export type EventUncheckedUpdateWithoutStationsInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedUpdateManyWithoutEventNestedInput
   surveyResponses?: Prisma.SurveyResponseUncheckedUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateWithoutSurveyResponsesInput = {
@@ -652,12 +705,14 @@ export type EventCreateWithoutSurveyResponsesInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   stations?: Prisma.StationCreateNestedManyWithoutEventInput
   individualRegistrations?: Prisma.IndividualRegistrationCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutSurveyResponsesInput = {
@@ -667,12 +722,14 @@ export type EventUncheckedCreateWithoutSurveyResponsesInput = {
   dateAndTime: Date | string
   location?: string | null
   images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: $Enums.RegistrationType
   code: string
   createdAt?: Date | string
   updatedAt?: Date | string
   stations?: Prisma.StationUncheckedCreateNestedManyWithoutEventInput
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedCreateNestedManyWithoutEventInput
+  solutions?: Prisma.SolutionUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutSurveyResponsesInput = {
@@ -698,12 +755,14 @@ export type EventUpdateWithoutSurveyResponsesInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stations?: Prisma.StationUpdateManyWithoutEventNestedInput
   individualRegistrations?: Prisma.IndividualRegistrationUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutSurveyResponsesInput = {
@@ -713,12 +772,98 @@ export type EventUncheckedUpdateWithoutSurveyResponsesInput = {
   dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
   code?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stations?: Prisma.StationUncheckedUpdateManyWithoutEventNestedInput
   individualRegistrations?: Prisma.IndividualRegistrationUncheckedUpdateManyWithoutEventNestedInput
+  solutions?: Prisma.SolutionUncheckedUpdateManyWithoutEventNestedInput
+}
+
+export type EventCreateWithoutSolutionsInput = {
+  id?: string
+  nameEvent: string
+  detail?: string | null
+  dateAndTime: Date | string
+  location?: string | null
+  images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registrationType?: $Enums.RegistrationType
+  code: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  stations?: Prisma.StationCreateNestedManyWithoutEventInput
+  individualRegistrations?: Prisma.IndividualRegistrationCreateNestedManyWithoutEventInput
+  surveyResponses?: Prisma.SurveyResponseCreateNestedManyWithoutEventInput
+}
+
+export type EventUncheckedCreateWithoutSolutionsInput = {
+  id?: string
+  nameEvent: string
+  detail?: string | null
+  dateAndTime: Date | string
+  location?: string | null
+  images?: string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registrationType?: $Enums.RegistrationType
+  code: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  stations?: Prisma.StationUncheckedCreateNestedManyWithoutEventInput
+  individualRegistrations?: Prisma.IndividualRegistrationUncheckedCreateNestedManyWithoutEventInput
+  surveyResponses?: Prisma.SurveyResponseUncheckedCreateNestedManyWithoutEventInput
+}
+
+export type EventCreateOrConnectWithoutSolutionsInput = {
+  where: Prisma.EventWhereUniqueInput
+  create: Prisma.XOR<Prisma.EventCreateWithoutSolutionsInput, Prisma.EventUncheckedCreateWithoutSolutionsInput>
+}
+
+export type EventUpsertWithoutSolutionsInput = {
+  update: Prisma.XOR<Prisma.EventUpdateWithoutSolutionsInput, Prisma.EventUncheckedUpdateWithoutSolutionsInput>
+  create: Prisma.XOR<Prisma.EventCreateWithoutSolutionsInput, Prisma.EventUncheckedCreateWithoutSolutionsInput>
+  where?: Prisma.EventWhereInput
+}
+
+export type EventUpdateToOneWithWhereWithoutSolutionsInput = {
+  where?: Prisma.EventWhereInput
+  data: Prisma.XOR<Prisma.EventUpdateWithoutSolutionsInput, Prisma.EventUncheckedUpdateWithoutSolutionsInput>
+}
+
+export type EventUpdateWithoutSolutionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEvent?: Prisma.StringFieldUpdateOperationsInput | string
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stations?: Prisma.StationUpdateManyWithoutEventNestedInput
+  individualRegistrations?: Prisma.IndividualRegistrationUpdateManyWithoutEventNestedInput
+  surveyResponses?: Prisma.SurveyResponseUpdateManyWithoutEventNestedInput
+}
+
+export type EventUncheckedUpdateWithoutSolutionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nameEvent?: Prisma.StringFieldUpdateOperationsInput | string
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateAndTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  images?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levels?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registrationType?: Prisma.EnumRegistrationTypeFieldUpdateOperationsInput | $Enums.RegistrationType
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stations?: Prisma.StationUncheckedUpdateManyWithoutEventNestedInput
+  individualRegistrations?: Prisma.IndividualRegistrationUncheckedUpdateManyWithoutEventNestedInput
+  surveyResponses?: Prisma.SurveyResponseUncheckedUpdateManyWithoutEventNestedInput
 }
 
 
@@ -730,12 +875,14 @@ export type EventCountOutputType = {
   stations: number
   individualRegistrations: number
   surveyResponses: number
+  solutions: number
 }
 
 export type EventCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   stations?: boolean | EventCountOutputTypeCountStationsArgs
   individualRegistrations?: boolean | EventCountOutputTypeCountIndividualRegistrationsArgs
   surveyResponses?: boolean | EventCountOutputTypeCountSurveyResponsesArgs
+  solutions?: boolean | EventCountOutputTypeCountSolutionsArgs
 }
 
 /**
@@ -769,6 +916,13 @@ export type EventCountOutputTypeCountSurveyResponsesArgs<ExtArgs extends runtime
   where?: Prisma.SurveyResponseWhereInput
 }
 
+/**
+ * EventCountOutputType without action
+ */
+export type EventCountOutputTypeCountSolutionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SolutionWhereInput
+}
+
 
 export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -777,6 +931,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   dateAndTime?: boolean
   location?: boolean
   images?: boolean
+  levels?: boolean
   registrationType?: boolean
   code?: boolean
   createdAt?: boolean
@@ -784,6 +939,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   stations?: boolean | Prisma.Event$stationsArgs<ExtArgs>
   individualRegistrations?: boolean | Prisma.Event$individualRegistrationsArgs<ExtArgs>
   surveyResponses?: boolean | Prisma.Event$surveyResponsesArgs<ExtArgs>
+  solutions?: boolean | Prisma.Event$solutionsArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["event"]>
 
@@ -796,17 +952,19 @@ export type EventSelectScalar = {
   dateAndTime?: boolean
   location?: boolean
   images?: boolean
+  levels?: boolean
   registrationType?: boolean
   code?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nameEvent" | "detail" | "dateAndTime" | "location" | "images" | "registrationType" | "code" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
+export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nameEvent" | "detail" | "dateAndTime" | "location" | "images" | "levels" | "registrationType" | "code" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
 export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   stations?: boolean | Prisma.Event$stationsArgs<ExtArgs>
   individualRegistrations?: boolean | Prisma.Event$individualRegistrationsArgs<ExtArgs>
   surveyResponses?: boolean | Prisma.Event$surveyResponsesArgs<ExtArgs>
+  solutions?: boolean | Prisma.Event$solutionsArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -816,6 +974,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     stations: Prisma.$StationPayload<ExtArgs>[]
     individualRegistrations: Prisma.$IndividualRegistrationPayload<ExtArgs>[]
     surveyResponses: Prisma.$SurveyResponsePayload<ExtArgs>[]
+    solutions: Prisma.$SolutionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -824,6 +983,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     dateAndTime: Date
     location: string | null
     images: string | null
+    levels: runtime.JsonValue | null
     registrationType: $Enums.RegistrationType
     code: string
     createdAt: Date
@@ -1171,6 +1331,7 @@ export interface Prisma__EventClient<T, Null = never, ExtArgs extends runtime.Ty
   stations<T extends Prisma.Event$stationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$stationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   individualRegistrations<T extends Prisma.Event$individualRegistrationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$individualRegistrationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IndividualRegistrationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   surveyResponses<T extends Prisma.Event$surveyResponsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$surveyResponsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SurveyResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  solutions<T extends Prisma.Event$solutionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$solutionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SolutionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1206,6 +1367,7 @@ export interface EventFieldRefs {
   readonly dateAndTime: Prisma.FieldRef<"Event", 'DateTime'>
   readonly location: Prisma.FieldRef<"Event", 'String'>
   readonly images: Prisma.FieldRef<"Event", 'String'>
+  readonly levels: Prisma.FieldRef<"Event", 'Json'>
   readonly registrationType: Prisma.FieldRef<"Event", 'RegistrationType'>
   readonly code: Prisma.FieldRef<"Event", 'String'>
   readonly createdAt: Prisma.FieldRef<"Event", 'DateTime'>
@@ -1622,6 +1784,30 @@ export type Event$surveyResponsesArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.SurveyResponseScalarFieldEnum | Prisma.SurveyResponseScalarFieldEnum[]
+}
+
+/**
+ * Event.solutions
+ */
+export type Event$solutionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Solution
+   */
+  select?: Prisma.SolutionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Solution
+   */
+  omit?: Prisma.SolutionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolutionInclude<ExtArgs> | null
+  where?: Prisma.SolutionWhereInput
+  orderBy?: Prisma.SolutionOrderByWithRelationInput | Prisma.SolutionOrderByWithRelationInput[]
+  cursor?: Prisma.SolutionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SolutionScalarFieldEnum | Prisma.SolutionScalarFieldEnum[]
 }
 
 /**

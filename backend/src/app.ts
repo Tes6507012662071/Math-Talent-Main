@@ -17,6 +17,7 @@ import certificateRoutes from "./routes/certificate.route";
 import landingRoutes from "./routes/landing.routes";
 import surveyRoutes from './routes/survey.routes';
 import surveyResponseRoutes from './routes/surveyResponse.routes';
+import exportRoutes from './routes/export.routes';
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use("/api/certificates", certificateRoutes);
 app.use("/api/landing", landingRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/survey-response', surveyResponseRoutes);
+app.use('/api/export', exportRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
