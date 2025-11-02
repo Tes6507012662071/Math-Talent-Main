@@ -14,7 +14,7 @@ const FaCalendarAlt = FaCalendarAltRaw as React.ComponentType<React.SVGProps<SVG
 const FaMapMarkerAlt = FaMapMarkerAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaUsers = FaUsersRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaHashtag = FaHashtagRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const EventDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

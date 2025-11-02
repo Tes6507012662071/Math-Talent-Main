@@ -5,7 +5,7 @@ import Footer from "../../components/Footer";
 import axios from "axios";
 import { fetchLandingContent, updateLandingContent, LandingData } from '../../api/landing';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 interface Applicant {
   id: string; 

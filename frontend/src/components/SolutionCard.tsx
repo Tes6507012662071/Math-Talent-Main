@@ -8,7 +8,7 @@ interface Props {
 
 const FaDownload = FaDownloadRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 const FaCalendarAlt = FaCalendarAltRaw as React.ComponentType<React.SVGProps<SVGSVGElement>>;
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 const SolutionCard: React.FC<Props> = ({ solution }) => {
 
   const formatDate = (dateString: string) => {

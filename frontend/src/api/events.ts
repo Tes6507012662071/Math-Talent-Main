@@ -1,6 +1,6 @@
 import { Event } from "../types/event"; 
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const fetchEvents = async (): Promise<Event[]> => {
   const res = await fetch(`${API_URL}/events`);
